@@ -553,7 +553,8 @@
       <p style="color:var(--ink-muted);font-size:14px;margin:0 0 12px;line-height:1.45">A one-time setup in your email. Forward from as many inboxes as you like — your own, a spouse’s, a shared household email — all to the one address below. After this, store receipts sort themselves.</p>
 
       <!-- email-the-steps sits at the TOP to reinforce this is a computer task (#19) -->
-      <button class="primary" data-emailfilter style="display:flex;align-items:center;justify-content:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/></svg>Email me these steps to do on a computer</button>
+      <button class="primary" data-emailfilter="steps" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/></svg>Email me these steps to do on a computer</button>
+      <p style="color:var(--ink-muted);font-size:12.5px;line-height:1.45;margin:8px 2px 0;text-align:center">We’ll email you every step <b style="font-weight:700;color:var(--ink)">with the screenshots included</b> — right in the message, no tapping to open — so you can follow along on the bigger screen.</p>
       <div class="desktopnote" style="margin-top:12px">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
         <div><b>Do it on a computer</b><span>Open <b style="font-weight:700">gmail.com</b> in a web browser on a desktop or laptop — the Gmail phone app can’t create forwarding filters.</span></div>
@@ -723,7 +724,7 @@
         <div class="cbrow"><code id="vend-filter">from:(amazon.com OR target.com)</code><button class="cp" data-copy-filter>Copy</button></div>
       </div>
       <p class="txn-note" style="margin:8px 2px 0;justify-content:flex-start;text-align:left;line-height:1.4">Updates as you flip stores on and off. Paste it into your Gmail forwarding filter so those stores start sorting.</p>
-      <button class="showme" data-emailfilter style="margin-top:10px">
+      <button class="showme" data-emailfilter="filter" style="margin-top:10px">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/></svg>
         Email me this filter so I can paste it on a computer
       </button>
@@ -1107,7 +1108,7 @@ window.SHOTS = {
   // tab bars
   const TSVG={home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     snap:'<path d="M9 4l1.2 2H15l1.2-2H19a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="12" cy="13" r="3.5"/>',
-    settings:'<circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.5 7.5 0 0 0 .1-1 7.5 7.5 0 0 0-.1-1l2-1.5-2-3.4-2.4.95a7 7 0 0 0-1.7-1L14.8 2.5h-4l-.35 2.55a7 7 0 0 0-1.7 1L6.35 5.1l-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2l-2 1.5 2 3.4 2.4-.95a7 7 0 0 0 1.7 1l.35 2.55h4l.35-2.55a7 7 0 0 0 1.7-1l2.4.95 2-3.4z"/>'};
+    settings:'<circle cx="12" cy="12" r="3.2"/><path d="M10.63 2.80L13.37 2.80L13.61 5.29L15.61 6.12L17.53 4.52L19.48 6.47L17.88 8.39L18.71 10.39L21.20 10.63L21.20 13.37L18.71 13.61L17.88 15.61L19.48 17.53L17.53 19.48L15.61 17.88L13.61 18.71L13.37 21.20L10.63 21.20L10.39 18.71L8.39 17.88L6.47 19.48L4.52 17.53L6.12 15.61L5.29 13.61L2.80 13.37L2.80 10.63L5.29 10.39L6.12 8.39L4.52 6.47L6.47 4.52L8.39 6.12L10.39 5.29Z"/>'};
   document.querySelectorAll("[data-tabs]").forEach(el=>{
     el.innerHTML=[["home","Home"],["snap","Snap"],["settings","Settings"]].map(([k,l])=>
       `<button class="tab" data-tab="${k}"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round">${TSVG[k]}</svg><span>${l}</span></button>`).join("");
@@ -1562,7 +1563,8 @@ window.SHOTS = {
     if(cf){ const box=cf.closest(".copybox"), code=box&&box.querySelector("code"); copyText(code?code.textContent:filterString(),"Filter copied — paste it in Gmail"); }
     const ca=e.target.closest("[data-copy-addr]");
     if(ca){ const box=ca.closest(".copybox"), code=box&&box.querySelector("code"); copyText(code?code.textContent:buildAddr(authTag),"Address copied"); }
-    if(e.target.closest("[data-emailfilter]")) toast("Sent to your inbox 📧");
+    const ef=e.target.closest("[data-emailfilter]");
+    if(ef) toast(ef.getAttribute("data-emailfilter")==="filter" ? "Filter emailed to your inbox 📧" : "Steps + screenshots emailed to your inbox 📧");
   });
   renderVendors();
 
