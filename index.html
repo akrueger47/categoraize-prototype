@@ -66,6 +66,11 @@
   .h-hello{font-size:14px;color:var(--ink-muted);font-weight:500}
   .h-title{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.08;margin:2px 0 0}
   .iconbtn{border:0;background:var(--surface);width:40px;height:40px;border-radius:50%;cursor:pointer;box-shadow:var(--shadow-card);color:var(--ink-muted);font-weight:700;font-size:16px;flex:0 0 auto;display:grid;place-items:center}
+  /* #G4: the tester never noticed "?" — a muted glyph on white beside the greeting block.
+     Filled with the brand tint rather than the brand itself: enough contrast to register,
+     not enough to compete with the hero, which is the screen #D1 just finished simplifying.
+     Deliberately the smallest possible move — see the prototypes README open questions. */
+  .iconbtn.help{background:var(--brand-tint);color:var(--brand-on-tint)}
   .hero{background:linear-gradient(158deg,#4F46E5,#7C3AED 92%);color:#fff;border-radius:26px;padding:24px 22px 22px;box-shadow:0 18px 38px -14px rgba(79,70,229,.65);cursor:pointer;position:relative;overflow:hidden;transition:transform .12s}
   .hero:active{transform:scale(.985)}
   .hero .glow{position:absolute;right:-40px;top:-50px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#ffffff55,transparent 70%)}
@@ -169,7 +174,10 @@
   .cam{margin:2px 18px 0;height:340px;border-radius:24px;background:linear-gradient(160deg,#1E1B4B,#3A3468);position:relative;overflow:hidden;display:grid;place-items:center;box-shadow:var(--shadow-card)}
   .cam .frame{width:76%;height:80%;border-radius:16px;border:2px dashed #ffffff55;display:grid;place-items:center;color:#ffffffbb;font-size:13px;text-align:center;padding:20px}
   .cam .corner{position:absolute;width:26px;height:26px;border:3px solid #22D3EE}
-  .cam.flash::after{content:"";position:absolute;inset:0;background:#fff;animation:flash .35s ease-out}
+  /* opacity:0 is the resting state — the animation has no fill-mode, so without it the
+     white shutter flash stayed at full opacity once the 0.35s finished. Previously hidden
+     because "Use these photos" navigated away; now you stay on Snap, so it showed. */
+  .cam.flash::after{content:"";position:absolute;inset:0;background:#fff;opacity:0;animation:flash .35s ease-out}
   @keyframes flash{from{opacity:.9}to{opacity:0}}
   .shutter{width:74px;height:74px;border-radius:50%;background:#fff;border:5px solid var(--brand);margin:18px auto 0;cursor:pointer;box-shadow:var(--shadow-pop)}
   .shutter:active{transform:scale(.93)}
@@ -320,6 +328,16 @@
   .ticket-msg.you{background:var(--surface-alt);color:var(--ink)} .ticket-msg.you .who{color:var(--ink-faint)}
   .ticket-msg.andrew{background:var(--brand-tint);color:var(--ink)} .ticket-msg.andrew .who{color:var(--brand-on-tint)}
   .fb-typetag{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--brand-tint);color:var(--brand-on-tint)}
+  /* #H3: the thread rendered every message identically, with no dates — so "which of these
+     is recent" had no answer on screen, and the tester re-read the oldest one. An unread
+     team message now carries an accent bar and a New tag, and every message carries a time. */
+  .ticket-msg .when{float:right;text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink-faint)}
+  .ticket-msg.fresh{border-left:3px solid var(--brand);border-top-left-radius:6px;border-bottom-left-radius:6px}
+  .newtag{display:inline-block;margin-left:7px;background:var(--brand);color:#fff;font-size:9.5px;letter-spacing:.04em;padding:2px 6px;border-radius:5px;vertical-align:1px}
+  .tk-from{font-size:11.5px;color:var(--ink-faint);margin:0 2px 14px;line-height:1.4}
+  .privnote{text-align:center;color:var(--ink-faint);font-size:12px;line-height:1.45;margin:8px 14px 0}
+  /* a quiet way to close a thread, for when the loud verdict buttons would be the wrong ask */
+  .linkact{display:block;width:100%;border:0;background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--ink-muted);padding:14px 0 2px;cursor:pointer;text-align:center}
 
   /* sticky save bar (transaction detail) */
   .savebar-fixed{position:absolute;left:0;right:0;bottom:0;padding:14px 18px calc(16px + var(--sab));background:#fff;box-shadow:0 -8px 30px -12px rgba(20,10,60,.3);display:flex;z-index:20}
@@ -438,6 +456,25 @@
   /* error toast (validation) — negatively themed, no green check */
   .toast.err{background:#B02A24}
 
+  /* Persistent undo (#G1). The toast's Undo lived for 3.6s and then there was no undo
+     affordance anywhere on screen — the tester asked "where is the undo button now?" and
+     twice lost the Activity screen she'd already found. The toast now settles into this
+     chip instead of vanishing: one object, two targets — undo the last change, or open
+     the full log. It only exists while there is something to undo. */
+  /* Right-anchored, not centred: the jump-menu FAB owns the bottom-left corner, and on a
+     phone this lands under the thumb rather than across the middle of the screen. */
+  .undochip{position:absolute;right:14px;bottom:calc(24px + var(--sab));transform:translateY(6px);
+    display:none;align-items:stretch;background:#FFFFFFf2;backdrop-filter:blur(10px);border:1px solid var(--line);
+    border-radius:13px;box-shadow:var(--shadow-card);z-index:70;opacity:0;transition:opacity .26s,transform .26s;max-width:calc(100% - 84px)}
+  .undochip.show{display:flex;opacity:1;transform:translateY(0)}
+  /* the "float down" out of the toast: start where the toast sat, settle into place */
+  .undochip.settling{transform:translateY(-84px) scale(.94);opacity:.35}
+  .undochip.tabs{bottom:calc(86px + var(--sab))}
+  .undochip button{border:0;background:transparent;font:inherit;cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 13px;color:var(--brand);font-weight:700;font-size:13px}
+  .undochip .u{min-width:0}
+  .undochip .u .what{color:var(--ink-muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .undochip .more{border-left:1px solid var(--line);padding:9px 11px;color:var(--ink-faint)}
+
   /* half-width stat tiles (Settings › How it's going) */
   .statrow{display:flex;gap:12px}
   .stat.half{flex:1;padding:17px 14px}
@@ -455,10 +492,42 @@
   .refrow .ch{color:var(--brand);font-weight:600;font-size:13.5px}
   .diffmark{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--warn);background:var(--warn-tint);border:1px solid var(--warn-line);border-radius:7px;padding:3px 7px;margin-left:8px}
 
+  /* returned-item rows on a refund card (#F1). One row per item that came back:
+     what it was, what it credited, and the two categories it moves between. The
+     list scrolls when it's long — a bulk Amazon return is the case this is for —
+     so the fade + counter below exist to make "there is more down there" visible. */
+  .refitems{margin-top:2px;border-radius:14px;overflow:hidden;background:var(--surface-alt)}
+  .refitems.scrolls{max-height:228px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .refscroll{position:relative}
+  /* the fade sits over the bottom of the list and clears once you reach the end */
+  .refscroll .fade{position:absolute;left:0;right:0;bottom:0;height:56px;pointer-events:none;border-radius:0 0 14px 14px;
+    background:linear-gradient(to bottom,rgba(243,242,239,0) 0%,rgba(243,242,239,.75) 45%,rgba(243,242,239,.99) 88%,var(--surface-alt) 100%);
+    opacity:0;transition:opacity .18s}
+  .refscroll.more .fade{opacity:1}
+  .refitem{padding:11px 13px 12px}
+  .refitem + .refitem{border-top:1px solid var(--line)}
+  .refitem .nmrow{display:flex;align-items:baseline;gap:10px}
+  .refitem .nm{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.3}
+  .refitem .amt{font-size:14.5px;font-weight:700;color:var(--good);font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .refitem .cats{display:flex;align-items:center;gap:7px;margin-top:8px}
+  .refcat{flex:1;min-width:0;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);
+    border-radius:11px;padding:7px 9px;cursor:pointer;font:inherit;text-align:left}
+  .refcat .lb{font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);font-weight:700;display:block;white-space:nowrap}
+  .refcat .cn{font-size:13px;font-weight:600;color:var(--ink);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .refcat .g{flex:1;min-width:0}
+  .refcat .cv{color:var(--ink-faint);flex:0 0 auto}
+  .refitem .arrow{color:var(--ink-faint);flex:0 0 auto}
+  .refitem.differs .refcat.to{border-color:var(--warn-line);background:var(--warn-tint)}
+  .refmore{display:block;width:100%;border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;
+    color:var(--brand);padding:8px 2px 0;cursor:pointer;text-align:center}
+
   /* unread-reply dots (feedback notifications) */
   .tab{position:relative}
   .tdot{position:absolute;top:2px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:#EF4444;box-shadow:0 0 0 2px #fff}
   .reddot{width:8px;height:8px;border-radius:50%;background:#EF4444;flex:0 0 auto;display:inline-block;margin-left:6px;box-shadow:0 0 0 2px #fff}
+  /* #H2: amber = you've read it and still owe a reply. Distinct from red = new, so a
+     question you've already opened stays outstanding without masquerading as unread. */
+  .tdot.owed,.reddot.owed{background:var(--warn)}
 
   /* which-budget indicator (only when >1 budget exists) */
   .budgetbar{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--ink);box-shadow:var(--shadow-card);cursor:pointer;margin-bottom:14px}
@@ -479,8 +548,12 @@
       <p>Snap or forward a receipt.<br>We sort the categories for you.</p>
       <div id="status-ban-login" style="align-self:stretch"></div>
       <div class="field-lbl" style="align-self:stretch;text-align:left;margin:6px 2px 4px">Sign in</div>
-      <input class="field" id="login-email" placeholder="Email you sign in with" inputmode="email" autocomplete="email" autocapitalize="none">
+      <input class="field" id="login-email" placeholder="Your everyday email" inputmode="email" autocomplete="email" autocapitalize="none">
       <div class="fielderr" id="login-err" style="display:none;align-self:stretch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span id="login-err-msg"></span></div>
+      <!-- the remedy is a real button, not a sentence to parse: an unknown email is a
+           wrong-screen problem, and reading "tap Create a profile below" then hunting for
+           the button is the step that failed in testing (#A2) -->
+      <button class="ghostbtn" id="login-err-go" style="display:none;margin-top:10px">Create a profile with this email</button>
       <button class="primary" id="send-code">Email me a sign-in code</button>
       <p class="muted-link" style="cursor:default;font-size:12.5px;line-height:1.45;max-width:300px;margin:8px auto 0">No password. We email a 6-digit code to sign in, then keep you logged in on this phone — you won’t need a code every time.</p>
       <div class="oedivider" style="width:100%">New here?</div>
@@ -503,7 +576,7 @@
 
       <div class="notebox" style="margin:12px 0 4px">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/></svg>
-        <div><b>Why we ask for your name</b><span>It becomes your own receipts address. Forward your store emails to it and they land in <em>your</em> profile — never mixed up with anyone else’s.</span></div>
+        <div><b>Why we ask for your name</b><span>It becomes your own <b style="font-weight:700">CategorAIze address</b>. Forward your store emails to it and they land in <em>your</em> profile — never mixed up with anyone else’s.</span></div>
       </div>
       <div class="addrchip"><span class="a" id="addr-preview">categoraize+yourname@gmail.com</span></div>
       <div class="varynote" id="vary-note" style="display:none">
@@ -511,9 +584,11 @@
         <span id="vary-note-msg"></span>
       </div>
 
-      <div class="field-lbl" style="margin-top:14px">Your email</div>
+      <!-- "Your email" alone is ambiguous the moment the CategorAIze address is on screen
+           above it — testers asked which one to type. Name both, every time (#A1). -->
+      <div class="field-lbl" style="margin-top:14px">Your everyday email</div>
       <input class="field" id="signup-email" placeholder="you@email.com" style="text-align:left" inputmode="email" autocomplete="email" autocapitalize="none">
-      <p class="muted-link" style="cursor:default;font-size:12.5px;line-height:1.45;text-align:left;margin:6px 2px 0">This is how you sign in. We email a 6-digit code here to confirm it’s really you — no password to remember or lose.</p>
+      <p class="muted-link" style="cursor:default;font-size:12.5px;line-height:1.45;text-align:left;margin:6px 2px 0">The email you already use every day — <b style="font-weight:700;color:var(--ink)">not</b> the CategorAIze address above. It’s how you sign in: we email a 6-digit code here to confirm it’s really you.</p>
 
       <button class="primary" id="signup-continue" style="margin-top:18px">Send me a code</button>
     </div></div>
@@ -542,16 +617,18 @@
         <p>Two quick connections and CategorAIze starts sorting for you.</p>
       </div>
 
-      <div class="sectlbl" style="margin-top:22px">Your unique CategorAIze email</div>
+      <div class="sectlbl" style="margin-top:22px">Your CategorAIze address</div>
       <div class="card" style="padding:14px 16px">
         <div class="addrchip" style="margin:0"><span class="a" id="setup-addr">categoraize+yourname@gmail.com</span><button class="cp" id="copy-addr">Copy</button></div>
-        <p style="font-size:12.5px;color:var(--ink-muted);line-height:1.45;margin:10px 2px 0">Forward your store receipt emails here (we’ll show you how). They land in your profile automatically — we recognize them by the inbox you forward from. Long address? Drag it left to see the whole thing.</p>
+        <p style="font-size:12.5px;color:var(--ink-muted);line-height:1.45;margin:10px 2px 0">Forward your store receipt emails here (we’ll show you how). They land in your profile automatically — we recognize them by the email account you forward from. Long address? Drag it left to see the whole thing.</p>
       </div>
 
       <div class="sectlbl">Finish setting up</div>
+      <!-- both rows are rendered from ynabConnected / emailConnected by renderSetup();
+           the forwarding row used to have no way to ever show as done (#B2) -->
       <div class="rowlist">
-        <div class="setupcard" id="setup-ynab"><span class="ic">🏦</span><div class="g"><b>Connect YNAB</b><span>So we can file receipts into your budget</span></div><span class="chev" id="ynab-chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
-        <div class="setupcard" data-go="forward"><span class="ic">✉️</span><div class="g"><b>Forward your receipts</b><span>One 5-minute Gmail filter, then it’s automatic</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="setupcard" id="setup-ynab"><span class="ic">🏦</span><div class="g"><b>Connect YNAB</b><span>So we can file receipts into your budget</span></div><span class="chev" id="ynab-chev"></span></div>
+        <div class="setupcard" id="setup-fwd" data-go="forward"><span class="ic">✉️</span><div class="g"><b>Forward your receipts</b><span>One 5-minute Gmail filter, then it’s automatic</span></div><span class="chev" id="fwd-chev"></span></div>
       </div>
 
       <button class="primary" data-go="home" style="margin-top:20px">Start using CategorAIze</button>
@@ -566,7 +643,7 @@
       <div class="ttl">Forward your receipts</div>
     </div>
     <div class="scroll"><div class="pad" style="padding-top:2px">
-      <p style="color:var(--ink-muted);font-size:14px;margin:0 0 12px;line-height:1.45">A one-time setup in your email. Forward from as many inboxes as you like — your own, a spouse’s, a shared household email — all to the one address below. After this, store receipts sort themselves.</p>
+      <p style="color:var(--ink-muted);font-size:14px;margin:0 0 12px;line-height:1.45">A one-time setup in your email. Forward from as many email accounts as you like — your own, a spouse’s, a shared household one — all to the single CategorAIze address below. After this, store receipts sort themselves.</p>
 
       <!-- email-the-steps sits at the TOP to reinforce this is a computer task (#19) -->
       <button class="primary" data-emailfilter="steps" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/></svg>Email me these steps to do on a computer</button>
@@ -576,7 +653,7 @@
         <div><b>Do it on a computer</b><span>Open <b style="font-weight:700">gmail.com</b> in a web browser on a desktop or laptop — the Gmail phone app can’t create forwarding filters.</span></div>
       </div>
 
-      <div class="sectlbl" style="margin-top:2px">Send receipts to</div>
+      <div class="sectlbl" style="margin-top:2px">Forward receipts to your CategorAIze address</div>
       <div class="addrchip"><span class="a" id="forward-addr">categoraize+yourname@gmail.com</span><button class="cp" id="copy-addr2">Copy</button></div>
       <p class="txn-note" style="margin:6px 2px 0;justify-content:flex-start;text-align:left;line-height:1.4">Long address? Drag it left to see the whole thing.</p>
 
@@ -605,18 +682,37 @@
         </div></div>
       </div>
 
-      <div class="sectlbl">Inboxes you forward from</div>
-      <p style="color:var(--ink-muted);font-size:13px;margin:0 0 12px;line-height:1.45">Add every email you’ll forward from — yours, a spouse’s, a shared household inbox. This is how we know a forwarded receipt is <b style="font-weight:700;color:var(--ink)">yours</b>: we recognize it by the inbox it came from, so it lands in your queue no matter which account forwarded it. Add each one here, then send a test from each to confirm it’s working.</p>
+      <div class="sectlbl">Email accounts you forward from</div>
+      <p style="color:var(--ink-muted);font-size:13px;margin:0 0 12px;line-height:1.45">Add every email account you’ll forward from — yours, a spouse’s, a shared household one. This is how we know a forwarded receipt is <b style="font-weight:700;color:var(--ink)">yours</b>: we recognize it by the account it came from, so it lands in your queue no matter which one forwarded it. Add each one here, then send a test from each to confirm it’s working.</p>
+      <!-- The shared-store-account case, spelled out as who-does-what. The old version
+           packed four claims into one sentence and testers bounced off both "no per-order
+           work" and "whoever set it up" (#B3). "Inbox" is avoided throughout — it was
+           reading as any of four different mailboxes. -->
       <div class="notebox" style="margin:0 0 12px">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <div><b>Sharing an account? (e.g. a family Amazon login)</b><span>If someone else shops on it too, whoever set it up just forwards everything from that one inbox — no per-order work. Each receipt is sorted to whoever’s <b style="font-weight:700">card was actually charged</b>, so your purchases land with you and theirs with them. Add the same inbox in each person’s setup so we know to check both budgets.</span></div>
+        <div><b>What if someone else shops on your Amazon — and has their own budget?</b>
+          <span style="display:block;margin-bottom:7px">Say you share one Amazon login, but you each have your own CategorAIze profile and your own YNAB budget. Amazon emails <em>you</em> every order, whoever placed it. Here’s who does what:</span>
+          <span style="display:block;margin-bottom:5px"><b style="font-weight:700;color:var(--ink)">You:</b> forward everything from your everyday email, exactly as set up above. There’s nothing to do order by order.</span>
+          <span style="display:block;margin-bottom:5px"><b style="font-weight:700;color:var(--ink)">We:</b> file each order against whoever’s card was actually charged — your orders to your budget, theirs to theirs.</span>
+          <span style="display:block"><b style="font-weight:700;color:var(--ink)">They:</b> open their own CategorAIze and add <em>your</em> email address to their “Email accounts you forward from” list. They don’t set up a Gmail filter — yours is already doing the forwarding. Adding it just tells us to check their budget for those charges too.</span>
+        </div>
       </div>
       <div class="rowlist" id="fwd-accounts"></div>
       <button class="requestrow" id="fwd-add" style="margin-top:12px">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Add email account
+        Add another email account
       </button>
-      <div class="txn-note" id="forward-status" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Test received — forwarding works! 🎉</div>
+
+      <!-- The wizard had no ending: the only way off it was the header back chevron, and
+           nothing told you you'd finished (#B1). Appears once any account confirms. -->
+      <div id="forward-done" style="display:none">
+        <div class="card" style="padding:18px 16px;margin-top:20px;text-align:center">
+          <div style="font-size:34px;line-height:1">🎉</div>
+          <b style="display:block;font-size:16px;margin-top:6px">Forwarding is working</b>
+          <p style="font-size:13px;color:var(--ink-muted);line-height:1.45;margin:6px 4px 0">Receipts from that account will sort themselves from now on. Forward from another email too? Add it above — or any time later from <b style="font-weight:700;color:var(--ink)">Settings › Email</b>.</p>
+        </div>
+        <button class="primary" id="forward-done-btn" style="margin-top:14px">Done</button>
+      </div>
     </div></div>
   </div>
 
@@ -625,7 +721,7 @@
     <div class="scroll"><div class="pad pad-tabs">
       <div class="h-top">
         <div><div class="h-hello">Good morning, Mamie</div><div class="h-title">Here’s what’s new</div></div>
-        <button class="iconbtn sp" data-go="feedback">?</button>
+        <button class="iconbtn help sp" data-go="feedback" aria-label="Help &amp; feedback">?</button>
       </div>
 
       <div id="status-ban"></div>
@@ -645,8 +741,12 @@
         <span><b>Check for new receipts</b><br><span>Search your receipts &amp; match to your budget</span></span>
       </button>
 
-      <button class="rechead" data-go="history"><span>Recently sorted</span><span class="chev">See all ›</span></button>
-      <div class="rowlist" id="recent-list"></div>
+      <!-- No transaction rows on Home (#D1). Testers read "Recently sorted" as the queue —
+           individually-tappable transactions are the only thing on this screen that looks
+           like the job, so they out-pull the hero. One link, no rows. -->
+      <div class="rowlist" style="margin-top:26px">
+        <div class="row" data-go="history" style="border-top:0"><span class="em">🗂️</span><div class="g"><b>Review previously sorted transactions</b><span>Already filed in YNAB — open one only if you want to change it</span></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9E9DB0" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
+      </div>
     </div></div>
     <div class="tabbar" data-tabs></div>
   </div>
@@ -665,7 +765,7 @@
   <!-- ===== SNAP ===== -->
   <div class="app" id="s-snap">
     <div class="scroll"><div class="pad pad-tabs" style="padding-top:0">
-      <div class="hdr" style="padding-left:0;padding-right:0"><div class="ttl">Snap a receipt</div><button class="iconbtn sp" data-go="feedback">?</button></div>
+      <div class="hdr" style="padding-left:0;padding-right:0"><div class="ttl">Snap a receipt</div><button class="iconbtn help sp" data-go="feedback" aria-label="Help &amp; feedback">?</button></div>
       <div class="cam" id="cam">
         <span class="corner" style="top:22px;left:34px;border-right:0;border-bottom:0;border-radius:4px 0 0 0"></span>
         <span class="corner" style="top:22px;right:34px;border-left:0;border-bottom:0;border-radius:0 4px 0 0"></span>
@@ -674,20 +774,19 @@
         <div class="frame" id="cam-frame">Line the receipt up inside the box</div>
       </div>
       <div class="shutter" id="shutter"></div>
-      <p id="snap-hint" style="text-align:center;color:var(--ink-muted);font-size:13.5px;margin-top:12px">We’ll read it and match it to a purchase — or, if there’s no match yet, keep it here and pair it up later.</p>
+      <p id="snap-hint" style="text-align:center;color:var(--ink-muted);font-size:13.5px;margin-top:12px">We’ll read it and add it to the list below, where you pick which transaction it belongs to.</p>
+      <!-- Receipt photos are device-only storage (FAMILY_APP_PLAN.md). Deliberately says
+           "we don't keep it" — a claim about us — and NOT "it never leaves your phone",
+           which would be false: Gemini vision does the reading. -->
+      <p class="privnote">🔒 The photo stays on your phone. We read it, keep what it says, and don’t store the picture.</p>
       <div class="pagestrip" id="pagestrip"></div>
       <div class="snap-actions" id="snap-actions" style="display:none">
         <button class="again" id="snap-again">＋ Add another page</button>
         <button class="done" id="snap-done">Use these photos</button>
       </div>
-      <div id="snap-backlog">
-        <div class="sectlbl">Waiting to match</div>
-        <div class="rowlist">
-          <!-- total + the date printed ON the receipt (not when the photo was taken) so you can tell which charge it is -->
-          <div class="row" data-matchphoto="costco"><span class="em">🧾</span><div class="g"><b>Costco receipt · $187.44</b><span>Dated Jul 17 · pick the matching purchase</span></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9E9DB0" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
-        </div>
-        <p class="txn-note" style="margin-top:10px;line-height:1.4">Once matched, it moves into your review list on Home like any other receipt.</p>
-      </div>
+      <!-- rendered by renderSnapBacklog(): pending photos, then a collapsed list of ones
+           already matched (which can be re-matched if they went to the wrong charge) -->
+      <div id="snap-backlog"></div>
     </div></div>
     <div class="tabbar" data-tabs></div>
   </div>
@@ -704,8 +803,12 @@
 
       <div class="sectlbl">Preferences</div>
       <div class="rowlist">
-        <div class="setrow" id="freq-row"><span class="ic" style="background:var(--brand-tint)">🕘</span><div class="g"><b>How often to check</b><span id="freq-sub">Automatically, once a day at 8:00am</span></div><span class="val" id="freq-val">Daily · 8:00am</span></div>
-        <div class="setrow"><span class="ic" style="background:var(--brand-tint)">🔔</span><div class="g"><b>Tell me when receipts are ready</b></div><span class="toggle on" data-toggle><i></i></span></div>
+        <div class="setrow"><span class="ic" style="background:var(--brand-tint)">🔔</span><div class="g"><b>Notifications</b><span>When new receipts are ready to review</span></div><span class="toggle on" data-toggle><i></i></span></div>
+        <!-- #I1: the memo is written by agent/memo.py (store first, then item names or a
+             count, capped at YNAB's 200 characters). A global on/off is the whole feature —
+             per-transaction memo editing would add typing to a flow whose pitch is "just
+             check our work". -->
+        <div class="setrow"><span class="ic" style="background:var(--brand-tint)">📝</span><div class="g"><b>Write a memo in YNAB</b><span>Fills each transaction&rsquo;s memo with the store and what you bought</span></div><span class="toggle on" data-toggle><i></i></span></div>
         <div class="setrow" data-go="vendors"><span class="ic" style="background:var(--brand-tint)">🏷️</span><div class="g"><b>Stores we sort</b><span id="vendors-sub">5 turned on · email only</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
         <div class="setrow" data-go="snoozed"><span class="ic" style="background:var(--brand-tint)">😴</span><div class="g"><b>Snoozed receipts</b><span id="snoozed-sub">Nothing snoozed</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
       </div>
@@ -718,6 +821,11 @@
 
       <div class="rowlist" style="margin-top:18px">
         <div class="setrow" data-go="activity"><span class="ic" style="background:var(--brand-tint)">↩️</span><div class="g"><b>Activity &amp; undo</b><span>Every change, newest first — undo anything</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <!-- #G2: demoted out of Preferences. The tester saw it, understood it, and felt no
+             need to touch it — which is a setting working correctly, not a failure. It keeps
+             its sheet (#21/#32) and "Every hour" (#72), and agent/status.py keeps deriving
+             its staleness window from it; it just stops presenting itself as a decision. -->
+        <div class="setrow" id="freq-row"><span class="ic" style="background:var(--brand-tint)">🕘</span><div class="g"><b>How often to check</b><span id="freq-sub">Automatically, once an hour</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
         <div class="setrow" data-tutorial><span class="ic" style="background:var(--brand-tint)">🧭</span><div class="g"><b>How to use CategorAIze</b><span>Replay the quick tour</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
         <div class="setrow" data-go="invite"><span class="ic" style="background:var(--brand-tint)">💌</span><div class="g"><b>Invite someone</b><span>Share the app with family or a friend</span></div><span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
         <div class="setrow" data-go="feedback"><span class="ic" style="background:var(--brand-tint)">💬</span><div class="g"><b>Help &amp; feedback</b><span>Report a problem or suggest an idea</span></div><span class="reddot" id="fb-notif" style="display:none"></span></div>
@@ -804,11 +912,11 @@
       <div class="fb-label" id="fb-q">What happened?</div>
       <textarea class="textarea" id="fb-text" placeholder="Tell us what you were trying to do and what went wrong."></textarea>
       <div class="draftnote" id="fb-draftnote" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Draft saved — safe to leave and grab a screenshot</div>
-      <div class="fb-label" id="fb-context-label">What were you doing?</div>
-      <div class="chips" id="fb-chips">
-        <button class="chip">Reviewing a receipt</button><button class="chip">Connecting YNAB</button>
-        <button class="chip">Taking a photo</button><button class="chip">Logging in</button><button class="chip">Something else</button>
-      </div>
+      <!-- #H1: the problem-type chips are gone. They were never read by anything — `fb-send`
+           only ever took `#fb-text` — and the tester tapped one at random, then filed a
+           photo-upload problem under a different category. A category is worth collecting
+           when it routes something; nothing here routes. The screen you came from is
+           stamped on the ticket instead: better data, zero effort, and it can't be wrong. -->
       <div class="fb-label">Add screenshots</div>
       <div class="attach" id="fb-attach">
         <div class="add"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
@@ -841,7 +949,7 @@
   <div class="app" id="s-history">
     <div class="hdr">
       <button class="back" data-go="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <div class="ttl">Recently sorted</div>
+      <div class="ttl">Previously sorted</div>
       <button class="link sp" data-go="activity">Activity</button>
     </div>
     <div class="seg" id="hist-seg">
@@ -925,13 +1033,15 @@
     </div>
   </div>
 
-  <!-- snooze sheet ("Not now" → when to ask again) -->
+  <!-- snooze sheet ("Later" → when to ask again) -->
   <div class="sheet" id="snoozesheet">
     <div class="sheet-bg" data-close-snooze></div>
     <div class="sheet-panel">
       <div class="grabber"></div>
-      <div class="sheet-title">Not now — ask me again when?</div>
-      <div class="sheet-sub">It won’t clutter your review list until then. Bring it back anytime from Settings › Snoozed receipts.</div>
+      <!-- "Not now" read as "make this disappear" — the sheet now says plainly that
+           nothing is lost and that you choose when it returns (#E3) -->
+      <div class="sheet-title">Bring this back when?</div>
+      <div class="sheet-sub">Nothing is lost — we keep the receipt and show it to you again when you say. It’s also in Settings › Snoozed receipts, so you can pull it back sooner.</div>
       <div class="cat-list" id="snooze-list" style="padding-top:6px"></div>
     </div>
   </div>
@@ -953,7 +1063,7 @@
     <div class="sheet-panel">
       <div class="grabber"></div>
       <div class="sheet-title">Add an email account</div>
-      <div class="sheet-sub">Another inbox you’ll forward receipts from. Registering it is what tells us those receipts are yours — then set up the same filter there, forwarding to your one address.</div>
+      <div class="sheet-sub">Another email account you’ll forward receipts from. Registering it is what tells us those receipts are yours — then set up the same filter there, forwarding to your one CategorAIze address.</div>
       <div style="padding:14px 20px 20px">
         <input class="field" id="email-input" placeholder="name@email.com" style="text-align:left" inputmode="email" autocapitalize="none">
         <input class="field" id="email-label" placeholder="Label (optional) — e.g. “Mamie’s inbox”" style="text-align:left;margin-top:10px">
@@ -997,7 +1107,7 @@
       <button data-go="setup">Finish setup</button>
       <button data-go="home">Home</button>
       <button data-go="review">Review a receipt</button>
-      <button data-go="history">Recently sorted</button>
+      <button data-go="history">Previously sorted</button>
       <button data-go="activity">Activity / undo</button>
       <button data-go="snoozed">Snoozed receipts</button>
       <button data-go="snap">Snap a receipt</button>
@@ -1014,6 +1124,12 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- persistent undo (#G1) — rendered by renderUndoChip() from the activity log -->
+  <div class="undochip" id="undochip">
+    <button class="u" id="undochip-do"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v3"/></svg>Undo<span class="what" id="undochip-what"></span></button>
+    <button class="more" id="undochip-more" aria-label="All recent activity"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+  </div>
 
   <!-- first-run tutorial (coach-mark tour) -->
   <div class="tut" id="tut">
@@ -1040,20 +1156,33 @@ window.SHOTS = {
   const CC = {"Groceries":"#22D3EE","Household Goods":"#6366F1","Personal Care":"#A855F7","Kids":"#14B8A6","Health & Wellness":"#EC4899","Dining Out":"#F59E0B","Pets":"#0EA5E9","Electronics":"#8B5CF6","Clothing":"#10B981","Gifts":"#F43F5E"};
   const money = n => "$"+n.toFixed(2);
 
+  // Testing note (#C2): the first and last cards each carry ONE deliberately absurd
+  // miscategorization (rotisserie chicken → Electronics, laundry detergent → Dining Out).
+  // With everything correct, testers approved all four cards without opening anything and
+  // the whole editing surface went untested. The errors are obvious on purpose — a
+  // *plausible* wrong category doesn't get caught either, which defeats the point.
   const proposals = [
     { merchant:"Costco Wholesale", logo:"🏬", date:"Jul 19 · from your email", total:164.63, items:[
-      {n:"Organic eggs, 24ct",p:8.99,c:"Groceries"},{n:"Rotisserie chicken",p:6.99,c:"Groceries"},{n:"Bananas, organic",p:2.79,c:"Groceries"},{n:"Whole milk, 2 gal",p:7.49,c:"Groceries"},{n:"Ground coffee, 3lb",p:16.99,c:"Groceries"},{n:"Mixed berries",p:12.49,c:"Groceries"},{n:"Chicken breast, 6lb",p:28.94,c:"Groceries"},
+      {n:"Organic eggs, 24ct",p:8.99,c:"Groceries"},{n:"Rotisserie chicken",p:6.99,c:"Electronics"},{n:"Bananas, organic",p:2.79,c:"Groceries"},{n:"Whole milk, 2 gal",p:7.49,c:"Groceries"},{n:"Ground coffee, 3lb",p:16.99,c:"Groceries"},{n:"Mixed berries",p:12.49,c:"Groceries"},{n:"Chicken breast, 6lb",p:28.94,c:"Groceries"},
       {n:"Paper towels, 12pk",p:21.99,c:"Household Goods"},{n:"Dish soap, 90oz",p:11.49,c:"Household Goods"},{n:"Trash bags, 200ct",p:18.99,c:"Household Goods"},
       {n:"Toothpaste, 5pk",p:12.99,c:"Personal Care"},{n:"Shampoo, 2ct",p:14.49,c:"Personal Care"} ]},
-    { kind:"refund", merchant:"Amazon", logo:"📦", date:"Jul 20 · refund credit", credit:24.99, matchIdx:0,
+    // A multi-item return — the Amazon "send four things back at once" case (#F1). Each
+    // returned item carries its own credit and its own pair of categories, because a single
+    // return shipment routinely spans several (#I2): p = what this item credited back,
+    // c = where the purchase was filed, rc = where the credit goes (follows c until decoupled).
+    { kind:"refund", merchant:"Amazon", logo:"📦", date:"Jul 20 · refund credit", credit:89.77, matchIdx:0,
       matchOptions:[
-        {label:"Amazon · Jun 25", sub:"Kids’ rain jacket, board game · $64.99", cat:"Kids", amt:64.99},
+        {label:"Amazon · Jun 25", sub:"Rain jacket, board game, sheets +3 · $214.60", cat:"Kids", amt:214.60},
         {label:"Amazon · Jul 2", sub:"Phone case, charging cable · $34.48", cat:"Electronics", amt:34.48},
         {label:"Amazon · Jul 9", sub:"Coffee maker · $49.99", cat:"Household Goods", amt:49.99},
         {label:"Target · Jul 12", sub:"Toddler sneakers · $27.99", cat:"Kids", amt:27.99},
         {label:"Costco · Jul 15", sub:"Groceries + household · $143.20", cat:"Groceries", amt:143.20},
         {label:"This isn’t a return", sub:"Treat it as its own credit — pick a category", cat:"Groceries"} ],
-      items:[{n:"Kids’ rain jacket (returned)",p:24.99,c:"Kids"}] },
+      items:[
+        {n:"Kids’ rain jacket",p:24.99,c:"Kids"},
+        {n:"Board game — Ticket to Ride",p:18.50,c:"Kids"},
+        {n:"Sheet set, queen",p:32.00,c:"Household Goods"},
+        {n:"Protein bars, 12ct",p:14.28,c:"Groceries"} ] },
     { merchant:"Amazon", logo:"📦", date:"Jul 18 · from your email", total:63.18,
       warn:{title:"Worth a quick look", body:"The charge on your card was $63.18, but the receipt adds up to $61.20. Tax or a small fee, most likely."}, items:[
       {n:"Crayola crayons, 64ct",p:9.99,c:"Kids"},{n:"Kids’ water bottle",p:12.99,c:"Kids"},
@@ -1061,7 +1190,7 @@ window.SHOTS = {
       {n:"Vitamin D, 120ct",p:13.74,c:"Health & Wellness"} ]},
     { merchant:"Target", logo:"🎯", date:"Jul 20 · from your email", total:41.07, items:[
       {n:"Face wash",p:9.49,c:"Personal Care"},{n:"Cotton rounds",p:4.29,c:"Personal Care"},
-      {n:"Laundry detergent",p:14.99,c:"Household Goods"},{n:"Sponges, 6pk",p:5.79,c:"Household Goods"},
+      {n:"Laundry detergent",p:14.99,c:"Dining Out"},{n:"Sponges, 6pk",p:5.79,c:"Household Goods"},
       {n:"Sparkling water, 8pk",p:6.51,c:"Groceries"} ]},
   ];
 
@@ -1117,15 +1246,17 @@ window.SHOTS = {
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.tab===id));
     $("fab").classList.toggle("up", !["home","snap","settings"].includes(id));
     if(id==="code"){ $("code-email").textContent = authEmail || "your email"; }
-    if(id==="setup"){ $("setup-hi").textContent = "You’re in"+(authName?`, ${authName.split(" ")[0]}!`:"!"); $("setup-addr").textContent = buildAddr(authTag); }
-    if(id==="forward"){ $("forward-addr").textContent = buildAddr(authTag); $("forward-status").style.display="none"; renderForward(); }
+    if(id==="setup"){ $("setup-hi").textContent = "You’re in"+(authName?`, ${authName.split(" ")[0]}!`:"!"); $("setup-addr").textContent = buildAddr(authTag); renderSetup(); }
+    if(id==="forward"){ $("forward-addr").textContent = buildAddr(authTag); renderForward(); }
     if(id==="review"){ multi=false; selected.clear(); if(idx>=proposals.length) idx=0; renderReview(); }
     if(id==="history"){ renderHistory(histDays); }
     if(id==="home"){ renderHomeSetup(); if(pendingTutorial){ pendingTutorial=false; setTimeout(startTutorial,500); } }
     if(id==="activity"){ $("act-back").setAttribute("data-go", actFrom); renderActivity(); }
+    if(id==="snap"){ renderSnapBacklog(); }
     if(id==="snoozed"){ renderSnoozed(); }
     if(id==="feedback"){ renderDrafts(); renderPast(); }
     const sc=$("s-"+id).querySelector(".scroll"); if(sc) sc.scrollTo(0,0);
+    renderUndoChip();   // the chip follows you onto the screens where changes are made (#G1)
     closeMenu();
   }
 
@@ -1178,7 +1309,7 @@ window.SHOTS = {
         ${groups}
         <div class="rev-actions">
           <button class="approve" data-act="approve"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Looks good</button>
-          <button class="skip" data-act="skip">Not now</button>
+          <button class="skip" data-act="skip">Later</button>
         </div>
       </div>`;
     bindReview(mount);
@@ -1192,14 +1323,6 @@ window.SHOTS = {
     root.querySelectorAll(".li").forEach(li=>li.onclick=()=>{
       const i=+li.dataset.i, p=proposals[idx];
       if(multi){ selected.has(i)?selected.delete(i):selected.add(i); renderReview(); }
-      else if(p.kind==="refund"){
-        // recategorize the original purchase from here; the refund follows it
-        openPicker(p.items,[i],(cat)=>{
-          if(p.matchOptions && p.matchOptions[p.matchIdx]) p.matchOptions[p.matchIdx].cat=cat;
-          renderReview();
-          toast("Original & refund → "+cat);
-        });
-      }
       else openPicker(p.items,[i],reviewPicked);
     });
     root.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
@@ -1213,26 +1336,35 @@ window.SHOTS = {
         logAct(p.kind==="refund"?"↩️":"✅", p.kind==="refund"?`${p.merchant} refund categorized`:`${p.merchant} approved`, p.kind==="refund"?"Credited back · tap Undo":"Sent to YNAB · tap Undo to bring it back", undo);
         toast(p.kind==="refund"?"Refund categorized":"Approved — sent to YNAB", undo); nextCard("approve");
       }
-      else openSnooze(was);   // "Not now" → snooze options (#12)
+      else openSnooze(was);   // "Later" → snooze options (#12/#E3)
     });
     const cm=root.querySelector("#change-match"); if(cm) cm.onclick=()=>openMatch(proposals[idx]);
-    // change the ORIGINAL purchase category; the refund follows it unless it's been decoupled
-    const oc=root.querySelector("#orig-catrow"); if(oc) oc.onclick=()=>{
-      const p=proposals[idx], m=p.matchOptions[p.matchIdx], cur=(m&&m.cat)||p.items[0].c;
-      pickCategory("Original purchase", (m&&m.amt)||0, cur, (cat)=>{
-        if(m) m.cat=cat; p.items.forEach(it=>it.c=cat);
-        renderReview(); toast(p.refundOverridden?`Purchase → ${cat}`:`Purchase & refund → ${cat}`);
-      });
-    };
-    // change JUST the refund category (decouples it); setting it back to the purchase re-links them
-    const rc=root.querySelector("#refund-catrow"); if(rc) rc.onclick=()=>{
-      const p=proposals[idx], m=p.matchOptions[p.matchIdx], origCat=(m&&m.cat)||p.items[0].c;
-      pickCategory("Refund credit", p.credit, p.refundCat||origCat, (cat)=>{
-        p.refundCat=cat; p.refundOverridden=(cat!==origCat);
-        renderReview(); toast(p.refundOverridden?`Refund → ${cat} (purchase unchanged)`:`Refund back in step with purchase`);
-      });
-    };
+    // Per returned item: "Bought as" moves the purchase (and the credit with it, unless
+    // that item's refund has been decoupled); "Refunded to" moves only the credit.
+    root.querySelectorAll("[data-refcat]").forEach(b=>b.onclick=()=>{
+      const p=proposals[idx], i=+b.dataset.i, it=p.items[i], which=b.dataset.refcat;
+      if(which==="from"){
+        pickCategory(`Bought as — ${it.n}`, it.p, it.c, (cat)=>{
+          it.c=cat;
+          renderReview(); toast(it.rcOv?`Purchase → ${cat}`:`Purchase & refund → ${cat}`);
+        });
+      } else {
+        pickCategory(`Refunded to — ${it.n}`, it.p, refundCatOf(it), (cat)=>{
+          it.rc=cat; it.rcOv=(cat!==it.c);            // back to the purchase category = re-linked
+          renderReview(); toast(it.rcOv?`Refund → ${cat} (purchase unchanged)`:"Refund back in step with the purchase");
+        });
+      }
+    });
     const ri=root.querySelector("#ref-info"); if(ri) ri.onclick=()=>root.querySelector("#ref-infopop").classList.toggle("open");
+    // The fade and the "scroll for the rest" line are the only signals that more items
+    // exist below the fold, so clear both the moment you actually reach the bottom.
+    const rs=root.querySelector("#ref-scroll"), rl=root.querySelector("#ref-items"), rm=root.querySelector("#ref-more");
+    if(rs && rl && rl.classList.contains("scrolls")){
+      const sync=()=>{ const atEnd=rl.scrollTop+rl.clientHeight >= rl.scrollHeight-4;
+        rs.classList.toggle("more",!atEnd); if(rm) rm.style.visibility=atEnd?"hidden":"visible"; };
+      rl.addEventListener("scroll",sync); sync();
+      if(rm) rm.onclick=()=>rl.scrollBy({top:rl.clientHeight-60,behavior:"smooth"});
+    }
   }
   function reviewPicked(cat,n){ multi=false; selected.clear(); renderReview(); toast(n>1?`${n} items → ${cat}`:`Moved to ${cat}`); }
 
@@ -1252,37 +1384,54 @@ window.SHOTS = {
     }).join("");
   }
 
+  // A returned item's refund category follows the category it was bought under until
+  // someone decouples it, so the credit cancels the original charge cleanly by default.
+  function refundCatOf(it){ return it.rcOv ? it.rc : it.c; }
+
   function renderRefund(p,mount){
     const m=p.matchOptions[p.matchIdx];
-    const origCat=(m&&m.cat)||p.items[0].c;              // category the original purchase is filed under
-    if(p.refundCat==null || !p.refundOverridden) p.refundCat=origCat;  // refund follows the purchase unless you decouple it
-    const refCat=p.refundCat, differs=refCat!==origCat;
+    const n=p.items.length, scrolls=n>3;
+    // Every category change re-renders the card. Without this, changing an item below
+    // the fold snaps the list to the top and hides the very edit you just made.
+    const prevScroll=(document.getElementById("ref-items")||{}).scrollTop||0;
+    const rows=p.items.map((it,i)=>{
+      const from=it.c, to=refundCatOf(it), differs=to!==from;
+      const chip=(kind,label,cat)=>`<button class="refcat ${kind}" data-refcat="${kind}" data-i="${i}">
+        <span class="dotm" style="background:${CC[cat]||'#C9C6DB'}"></span>
+        <span class="g"><span class="lb">${label}</span><span class="cn">${cat}</span></span>
+        <span class="cv"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>`;
+      return `<div class="refitem ${differs?'differs':''}">
+          <div class="nmrow"><span class="nm">${it.n}</span><span class="amt">+${money(it.p)}</span></div>
+          <div class="cats">${chip("from","Bought as",from)}
+            <span class="arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 7l5 5-5 5"/></svg></span>
+            ${chip("to","Refund to",to)}</div>
+        </div>`;
+    }).join("");
     mount.innerHTML=`
       <div class="revcard" id="thecard">
         <div class="rev-head"><div class="logo">${p.logo}</div>
           <div class="m"><span class="refund-tag">Refund</span><b>${p.merchant}</b><span>${p.date}</span></div>
-          <div class="tot"><b style="color:var(--good)">+${money(p.credit)}</b><span>back to budget</span></div></div>
+          <div class="tot"><b style="color:var(--good)">+${money(p.credit)}</b></div></div>
         <div class="matchban"><span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v3"/></svg></span><div class="g"><b>Matched to ${m.label}</b><span>${m.sub}</span></div><button class="change" id="change-match">Change</button></div>
 
         <div class="refsec">
-          <div class="rl">Original purchase category</div>
-          <div class="refrow" id="orig-catrow"><span class="dotm" style="background:${CC[origCat]||'#C9C6DB'}"></span><span class="cn">${origCat}</span><span class="ch">Change ›</span></div>
-        </div>
-
-        <div class="refsec">
-          <div class="rl">Refund category
+          <div class="rl">What came back · ${n} item${n===1?"":"s"}
             <button class="infobtn" id="ref-info" aria-label="How refund categories work"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></button>
-            ${differs?'<span class="diffmark"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Differs from purchase</span>':''}
           </div>
-          <div class="refrow" id="refund-catrow"><span class="dotm" style="background:${CC[refCat]||'#C9C6DB'}"></span><span class="cn">${refCat}</span><span class="ch">Change ›</span></div>
-          <div class="infopop" id="ref-infopop">Your refund is filed in the same category as the purchase by default, so the credit cancels the original charge cleanly. Change it only if you like to track returns separately — the purchase stays where it is.</div>
+          <div class="refscroll ${scrolls?'more':''}" id="ref-scroll">
+            <div class="refitems ${scrolls?'scrolls':''}" id="ref-items">${rows}</div>
+            <div class="fade"></div>
+          </div>
+          ${scrolls?`<button class="refmore" id="ref-more">Scroll for the rest of the ${n} items ↓</button>`:""}
+          <div class="infopop" id="ref-infopop">Each thing you sent back goes to the category it was bought under, so the credit cancels the original charge cleanly. Change “Refunded to” on any item if you'd rather track returns somewhere else — the purchase stays where it is.</div>
         </div>
 
         <div class="rev-actions" style="margin-top:16px">
           <button class="approve" data-act="approve"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Looks good</button>
-          <button class="skip" data-act="skip">Not now</button>
+          <button class="skip" data-act="skip">Later</button>
         </div>
       </div>`;
+    const list=mount.querySelector("#ref-items"); if(list) list.scrollTop=prevScroll;
     bindReview(mount);
   }
 
@@ -1290,32 +1439,114 @@ window.SHOTS = {
   function openMatch(p){
     matchMode="refund";
     $("matchsheet-title").textContent="Which purchase was refunded?";
-    $("matchsheet-sub").textContent="Pick the order this return came from.";
+    // Name what came back right here, so the comparison is local — same fix as the photo
+    // match sheet (#E2). Long returns get a count rather than a wrapping wall of names.
+    const names=p.items.map(it=>it.n);
+    const what=names.length>2 ? `${names.slice(0,2).join(", ")} +${names.length-2} more` : names.join(", ");
+    $("matchsheet-sub").textContent=`You sent back: ${what} · ${money(p.credit)}. Pick the order it came from.`;
     $("match-list").innerHTML=p.matchOptions.map((o,i)=>`
       <div class="catopt ${i===p.matchIdx?'cur':''}" data-match="${i}"><div style="flex:1;min-width:0"><b style="display:block;font-weight:600">${o.label}</b><span style="font-size:12.5px;color:var(--ink-muted)">${o.sub}</span></div>${i===p.matchIdx?'<span class="chk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>':''}</div>`).join("");
     $("matchsheet").classList.add("open");
   }
-  // photo backlog → "which purchase is this receipt for?" (Snap › Waiting to match)
-  const PHOTO_MATCH=[
-    {label:"Costco · Jul 17 · $187.44", sub:"Charge on your card — exact match to this receipt"},
-    {label:"Costco · Jul 15 · $143.20", sub:"Groceries + household"},
-    {label:"Enter manually", sub:"Search by amount or store"},
+  // ---- photographed receipts waiting for a transaction (Snap tab) ----
+  // A snapped receipt has no charge attached yet. That middle state was invisible — the
+  // photo vanished and reappeared as a review card — so it's now explicit state you can
+  // see, match, and re-match (#E1). Matching pushes a real proposal into the queue and
+  // points `idx` at it: the old code just called show("review") with whatever `idx`
+  // already was, so matching a Costco photo after browsing the deck landed you on Amazon.
+  let photoSeq=1, snapShowMatched=false, photoCtx=null;
+  const MANUAL_OPT={label:"Enter manually", sub:"Search by amount or store", manual:true};
+  const photoBacklog=[
+    {id:0, merchant:"Costco", total:187.44, date:"Jul 17", matched:null,
+     candidates:[
+       {label:"Costco · Jul 17 · $187.44", sub:"Charge on your card — exact match to this receipt"},
+       {label:"Costco · Jul 15 · $143.20", sub:"Groceries + household"}],
+     proposal:{ merchant:"Costco Wholesale", logo:"🧾", date:"Jul 17 · from your photo", total:187.44, items:[
+       {n:"Ribeye steak, 3lb",p:42.99,c:"Groceries"},{n:"Salmon fillet",p:24.99,c:"Groceries"},{n:"Eggs, 24ct",p:8.99,c:"Groceries"},
+       {n:"Strawberries, 2lb",p:9.49,c:"Groceries"},{n:"Sourdough loaf",p:6.99,c:"Groceries"},{n:"Olive oil, 3L",p:21.99,c:"Groceries"},
+       {n:"Paper towels, 12pk",p:21.99,c:"Household Goods"},{n:"Laundry detergent",p:19.99,c:"Household Goods"},
+       {n:"Toothpaste, 5pk",p:12.99,c:"Personal Care"},
+       {n:"Multivitamin, 90ct",p:17.03,c:"Health & Wellness"}]}},
   ];
-  function openPhotoMatch(){
-    matchMode="photo";
-    $("matchsheet-title").textContent="Which purchase is this for?";
-    $("matchsheet-sub").textContent="Pick the charge this photographed receipt goes with.";
-    $("match-list").innerHTML=PHOTO_MATCH.map((o,i)=>`
+  // what a fresh snap "reads" — cycled so repeated captures don't stack identical rows
+  const PHOTO_READS=[
+    {merchant:"Trader Joe’s", total:52.18, date:"Aug 2",
+     candidates:[{label:"Trader Joe’s · Aug 2 · $52.18", sub:"Charge on your card — exact match to this receipt"},
+                 {label:"Trader Joe’s · Jul 26 · $41.03", sub:"Groceries"}],
+     items:[{n:"Frozen dumplings",p:4.99,c:"Groceries"},{n:"Orange chicken",p:5.49,c:"Groceries"},{n:"Bananas",p:1.96,c:"Groceries"},
+            {n:"Greek yogurt, 4pk",p:4.49,c:"Groceries"},{n:"Cold brew concentrate",p:7.99,c:"Groceries"},{n:"Sourdough",p:3.99,c:"Groceries"},
+            {n:"Chicken breast, 2lb",p:11.28,c:"Groceries"},
+            {n:"Dish soap",p:3.99,c:"Household Goods"},{n:"Paper napkins",p:2.49,c:"Household Goods"},
+            {n:"Hand soap",p:5.51,c:"Personal Care"}]},
+    {merchant:"Home Depot", total:96.74, date:"Aug 1",
+     candidates:[{label:"Home Depot · Aug 1 · $96.74", sub:"Charge on your card — exact match to this receipt"},
+                 {label:"Home Depot · Jul 21 · $58.12", sub:"Household"}],
+     items:[{n:"Furnace filters, 3pk",p:34.97,c:"Household Goods"},{n:"LED bulbs, 8pk",p:21.98,c:"Household Goods"},
+            {n:"Duct tape",p:8.47,c:"Household Goods"},{n:"Work gloves",p:12.98,c:"Household Goods"},{n:"Sandpaper pack",p:2.35,c:"Household Goods"},
+            {n:"Extension cord, 25ft",p:15.99,c:"Electronics"}]},
+  ];
+  let photoReadNext=0;
+  function newPhotoFromSnap(){
+    const r=PHOTO_READS[photoReadNext++ % PHOTO_READS.length];
+    return {id:photoSeq++, merchant:r.merchant, total:r.total, date:r.date, matched:null,
+      candidates:r.candidates.map(c=>({...c})),
+      proposal:{merchant:r.merchant, logo:"🧾", date:`${r.date} · from your photo`, total:r.total, items:r.items.map(it=>({...it}))}};
+  }
+
+  function renderSnapBacklog(){
+    const el=$("snap-backlog"); if(!el) return;
+    const pend=photoBacklog.filter(p=>!p.matched), got=photoBacklog.filter(p=>p.matched);
+    const chev='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9E9DB0" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+    let h=`<div class="sectlbl">Waiting to match to a transaction</div>`;
+    if(pend.length){
+      // total + the date printed ON the receipt (not when the photo was taken), so you
+      // can tell which charge it is; the 🧾 opens the photo itself (#E2)
+      h+=`<div class="rowlist">`+pend.map(p=>`
+        <div class="row" data-matchphoto="${p.id}"><span class="em" data-photoview="${p.id}">🧾</span>
+          <div class="g"><b>${p.merchant} receipt · ${money(p.total)}</b><span>Dated ${p.date} · pick the transaction it goes with</span></div>${chev}</div>`).join("")+`</div>`;
+      h+=`<p class="txn-note" style="margin-top:10px;line-height:1.4">We’ve read ${pend.length>1?"these photos":"this photo"}, but we don’t know which charge ${pend.length>1?"they belong":"it belongs"} to yet. Match ${pend.length>1?"one":"it"} and you can categorize it right away.</p>`;
+    } else {
+      h+=`<p class="empty">Nothing waiting. Snap a paper receipt above and it’ll sit here until you match it to a transaction.</p>`;
+    }
+    if(got.length){
+      h+=`<button class="seemore" data-snapmatched>${snapShowMatched?"Hide matched photos":`See ${got.length} matched photo${got.length>1?"s":""}`}</button>`;
+      if(snapShowMatched) h+=`<div class="rowlist">`+got.map(p=>`
+        <div class="setrow"><span class="ic" style="background:var(--surface-alt);cursor:pointer" data-photoview="${p.id}">🧾</span>
+          <div class="g"><b>${p.merchant} · ${money(p.total)}</b><span>Matched to ${p.matched}</span></div>
+          <button class="change" data-rematch="${p.id}">Re-match</button></div>`).join("")+`</div>`;
+    }
+    el.innerHTML=h;
+  }
+
+  function openPhotoMatch(id){
+    const p=photoBacklog.find(x=>x.id===id); if(!p) return;
+    photoCtx=p; matchMode="photo";
+    $("matchsheet-title").textContent = p.matched ? "Match it to a different transaction" : "Which transaction is this for?";
+    // the number being compared has to be inside the sheet — the row that showed it is
+    // covered by the sheet at this point (#E2)
+    $("matchsheet-sub").textContent=`Your photo: ${p.merchant} · ${money(p.total)} · dated ${p.date}. Pick the charge it goes with.`;
+    $("match-list").innerHTML=p.candidates.concat([MANUAL_OPT]).map((o,i)=>`
       <div class="catopt" data-photomatch="${i}"><div style="flex:1;min-width:0"><b style="display:block;font-weight:600">${o.label}</b><span style="font-size:12.5px;color:var(--ink-muted)">${o.sub}</span></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9E9DB0" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>`).join("");
     $("matchsheet").classList.add("open");
   }
   function closeMatch(){ $("matchsheet").classList.remove("open"); }
-  document.addEventListener("click",e=>{ if(e.target.closest("[data-matchphoto]")) openPhotoMatch(); });
+  document.addEventListener("click",e=>{
+    const pv=e.target.closest("[data-photoview]");
+    if(pv){ const p=photoBacklog.find(x=>x.id===+pv.dataset.photoview);
+      // The photo shown here is the phone's own copy — the server keeps only the parse.
+      openShot(p ? `Your photo of the ${p.merchant} receipt — ${money(p.total)}, dated ${p.date} — opens here full screen, where you can zoom in to read it. It’s the copy on your phone: we read the receipt and kept what it says, not the picture. A published prototype can’t carry real photos.`
+                 : "Your receipt photo would open here, from the copy on your phone.");
+      return; }
+    const rm=e.target.closest("[data-rematch]"); if(rm){ openPhotoMatch(+rm.dataset.rematch); return; }
+    const sm=e.target.closest("[data-snapmatched]"); if(sm){ snapShowMatched=!snapShowMatched; renderSnapBacklog(); return; }
+    const mp=e.target.closest("[data-matchphoto]"); if(mp){ openPhotoMatch(+mp.dataset.matchphoto); return; }
+  });
 
   function syncMsBar(){
     const bar=$("msbar");
     if(multi){ bar.classList.add("show"); $("ms-count").textContent=`${selected.size} selected`; const g=$("ms-go"); g.disabled=selected.size===0; g.textContent=selected.size?`Categorize ${selected.size}`:"Categorize"; }
     else bar.classList.remove("show");
+    renderUndoChip();   // the multi-select bar owns the bottom of the screen while it's up
   }
   // re-sync bar after each render
   const _rr=renderReview; renderReview=function(){_rr();syncMsBar();};
@@ -1356,7 +1587,7 @@ window.SHOTS = {
 
   // ---- snap flow ----
   let pages=0;
-  function resetSnap(){ pages=0; $("pagestrip").innerHTML=""; $("snap-actions").style.display="none"; $("snap-hint").textContent="We’ll read it, then ask which purchase it goes with."; $("snap-backlog").style.display=""; }
+  function resetSnap(){ pages=0; $("pagestrip").innerHTML=""; $("snap-actions").style.display="none"; $("cam").classList.remove("flash"); $("snap-hint").textContent="We’ll read it and add it to the list below, where you pick which transaction it belongs to."; $("snap-backlog").style.display=""; }
   $("shutter").onclick=()=>{
     const cam=$("cam"); cam.classList.remove("flash"); void cam.offsetWidth; cam.classList.add("flash");
     pages++; const pg=document.createElement("div"); pg.className="pg"; pg.textContent="Page "+pages; $("pagestrip").appendChild(pg);
@@ -1364,15 +1595,22 @@ window.SHOTS = {
     $("snap-hint").textContent = pages===1 ? "Got it. Long receipt? Add another page." : `${pages} pages captured for this one receipt.`;
   };
   $("snap-again").onclick=()=>{ toast("Camera ready — line up the next part"); };
+  // A fresh photo has no charge attached yet, so it lands in the waiting list rather than
+  // jumping to Review — that gap is the thing the Snap tab exists to make visible (#E1).
   $("snap-done").onclick=()=>{ if(blockedByOutage("Can’t read receipts right now — try again later")) return;
-    toast(`Reading ${pages} ${pages>1?'pages':'page'}…`); setTimeout(()=>{ resetSnap(); show("review"); },900); };
+    toast(`Reading ${pages} ${pages>1?'pages':'page'}…`);
+    setTimeout(()=>{ photoBacklog.unshift(newPhotoFromSnap()); resetSnap(); renderSnapBacklog();
+      toast("Read it — now pick which transaction it goes with"); },900); };
 
   // ---- misc ----
   let tT; function toast(m,undo){ const t=$("toast"); t.classList.remove("err");
     t.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7CF0AE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>${m}</span>`;
     if(typeof undo==="function"){ const u=document.createElement("button"); u.className="undo"; u.textContent="Undo";
       u.onclick=()=>{ if(!t.classList.contains("show")) return; clearTimeout(tT); t.classList.remove("show"); undo(); toast("Undone"); }; t.appendChild(u); }
-    t.classList.add("show"); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove("show"), undo?3600:1900); }
+    t.classList.add("show"); clearTimeout(tT);
+    // A toast that carried an Undo doesn't just expire — it settles into the persistent
+    // chip (#G1), so the affordance the user was looking at is never simply gone.
+    tT=setTimeout(()=>{ t.classList.remove("show"); if(undo) renderUndoChip(true); }, undo?3600:1900); }
   // real clipboard copy (with a legacy fallback) so every Copy button actually copies (#21)
   function copyText(text,msg){
     const ok=()=>toast(msg||"Copied");
@@ -1420,7 +1658,11 @@ window.SHOTS = {
     {key:"manual", label:"Only when I tap Check", timed:false, counted:false, dayed:false},
   ];
   const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  let schedKey="daily", schedH=8, schedM=0, schedAP="am", schedCount=3, schedDay="Mon";
+  // Hourly is the default (#C1): checking is cheap, and the tutorial can then state a
+  // real cadence ("about once an hour") instead of promising vague automatic arrival.
+  // Backend note: agent/status.py derives its staleness window from this — hourly means
+  // a missed run is flagged at ~70 min, which #72 already made safe (grace floor 10 min).
+  let schedKey="hourly", schedH=8, schedM=0, schedAP="am", schedCount=3, schedDay="Mon";
   const fmtTime=()=>`${schedH}:${schedM===0?"00":"30"}${schedAP}`;
   function optOf(k){ return SCHED.find(o=>o.key===k); }
   function buildTimeSel(){
@@ -1447,13 +1689,15 @@ window.SHOTS = {
   function applySchedule(){
     const o=optOf(schedKey);
     if(o.timed && !o.counted){ const h=$("ts-h"),m=$("ts-m"),ap=$("ts-ap"); if(h){schedH=+h.value;schedM=+m.value;schedAP=ap.value;} }
-    let val, sub;
-    if(schedKey==="hourly"){ val="Hourly"; sub="Automatically, once an hour"; }
-    else if(schedKey==="few"){ val=`${schedCount}× a day`; sub=`Automatically, ${schedCount} times a day`; }
-    else if(schedKey==="daily"){ val=`Daily · ${fmtTime()}`; sub=`Automatically, once a day at ${fmtTime()}`; }
-    else if(schedKey==="weekly"){ val=`Weekly · ${schedDay} ${fmtTime()}`; sub=`Automatically, every ${schedDay} at ${fmtTime()}`; }
-    else { val="Manual"; sub="Never automatic — you tap Check for new receipts"; }
-    $("freq-val").textContent=val; $("freq-sub").textContent=sub;
+    // #G2 dropped the standalone "Hourly" value badge — the cadence now reads only in the
+    // subtitle, so the row stops announcing itself as a decision that wants making.
+    let sub;
+    if(schedKey==="hourly") sub="Automatically, once an hour";
+    else if(schedKey==="few") sub=`Automatically, ${schedCount} times a day`;
+    else if(schedKey==="daily") sub=`Automatically, once a day at ${fmtTime()}`;
+    else if(schedKey==="weekly") sub=`Automatically, every ${schedDay} at ${fmtTime()}`;
+    else sub="Never automatic — you tap Check for new receipts";
+    $("freq-sub").textContent=sub;
   }
   $("freq-row").onclick=openSched;
   $("schedsheet").querySelector("[data-close-sched]").onclick=()=>$("schedsheet").classList.remove("open");
@@ -1471,9 +1715,16 @@ window.SHOTS = {
   // match sheet (refund → which purchase)
   $("match-list").addEventListener("click",e=>{
     const pm=e.target.closest("[data-photomatch]");
-    if(pm){ const o=PHOTO_MATCH[+pm.dataset.photomatch]; closeMatch();
-      if(o.label==="Enter manually"){ toast("Search coming next"); return; }
-      $("snap-backlog").style.display="none"; toast(`Matched to ${o.label} — review it now`);
+    if(pm){ const p=photoCtx; if(!p) return;
+      const o=p.candidates.concat([MANUAL_OPT])[+pm.dataset.photomatch]; closeMatch();
+      if(o.manual){ toast("Search coming next"); return; }   // known gap — see docs/UI_PARITY.md
+      const rematch=!!p.matched;
+      p.matched=o.label; renderSnapBacklog();
+      if(rematch){ toast(`Re-matched to ${o.label}`); return; }
+      // Straight into categorizing *this* receipt, then on through the rest of the deck.
+      // Pushing the proposal and setting idx is what makes "review it now" true.
+      proposals.push(p.proposal); idx=proposals.length-1; done.delete(idx);
+      updateHome(); toast("Matched — let’s categorize it");
       setTimeout(()=>show("review"),700); return; }
     const opt=e.target.closest("[data-match]"); if(!opt) return;
     const p=proposals[idx]; p.matchIdx=+opt.dataset.match;
@@ -1603,7 +1854,36 @@ window.SHOTS = {
 
   // ---- activity log (repeatable undo, even after the toast fades) ----
   const activity=[]; let actSeq=1;
-  function logAct(icon,title,sub,revert,redo){ activity.unshift({id:actSeq++,icon,title,sub,undone:false,revert,redo}); }
+  function logAct(icon,title,sub,revert,redo){ activity.unshift({id:actSeq++,icon,title,sub,undone:false,revert,redo}); renderUndoChip(); }
+
+  // ---- persistent undo chip (#G1) ----
+  // #18 made undo deliberately transient ("unobtrusive, no persistent UI") and #63 answered
+  // "it's buried" by adding the Settings row. The tester lost it anyway, twice, and said
+  // outright that undo should be a permanent fixture. So #18's premise is reversed on
+  // purpose: there is now always an undo affordance while there is something to undo.
+  // #63 survives untouched — this chip is an additional route to the same Activity screen.
+  const UNDO_SCREENS=["home","review","history","txn"];   // where changes are made or seen
+  function lastUndoable(){ return activity.find(a=>!a.undone && a.revert); }
+  function renderUndoChip(settle){
+    const chip=$("undochip"), a=lastUndoable();
+    const here=SCREENS.find(s=>$("s-"+s).classList.contains("show"));
+    const wanted=!!a && UNDO_SCREENS.includes(here) && !$("msbar").classList.contains("show");
+    if(!wanted){ chip.classList.remove("show","settling"); return; }
+    $("undochip-what").textContent="· "+a.title;
+    chip.classList.toggle("tabs", here==="home");          // clear the tab bar where there is one
+    if(settle && !chip.classList.contains("show")){
+      // start where the toast was sitting, then fall into place — so the control the user
+      // was just looking at visibly becomes the one that stays
+      chip.classList.add("show","settling");
+      requestAnimationFrame(()=>requestAnimationFrame(()=>chip.classList.remove("settling")));
+    } else chip.classList.add("show");
+  }
+  $("undochip-do").onclick=()=>{
+    const a=lastUndoable(); if(!a) return;
+    a.undone=true; a.revert();
+    renderActivity(); renderRecent(); renderUndoChip(); toast("Undone");
+  };
+  $("undochip-more").onclick=()=>{ actFrom=SCREENS.find(s=>$("s-"+s).classList.contains("show"))||"home"; show("activity"); };
   function renderActivity(){
     const m=$("activity-mount");
     if(!activity.length){ m.innerHTML=`<p class="empty">Nothing yet. Approvals and category changes show up here so you can undo them anytime — even long after.</p>`; return; }
@@ -1615,12 +1895,12 @@ window.SHOTS = {
   }
   $("activity-mount").addEventListener("click",e=>{
     const ub=e.target.closest("[data-undo]");
-    if(ub){ const a=activity.find(x=>x.id===+ub.dataset.undo); if(!a||a.undone) return; a.undone=true; if(a.revert) a.revert(); renderActivity(); renderRecent(); toast("Undone"); return; }
+    if(ub){ const a=activity.find(x=>x.id===+ub.dataset.undo); if(!a||a.undone) return; a.undone=true; if(a.revert) a.revert(); renderActivity(); renderRecent(); renderUndoChip(); toast("Undone"); return; }
     const rb=e.target.closest("[data-redo]");   // #22: redo a mistaken undo
-    if(rb){ const a=activity.find(x=>x.id===+rb.dataset.redo); if(!a||!a.undone) return; a.undone=false; if(a.redo) a.redo(); renderActivity(); renderRecent(); toast("Redone"); return; }
+    if(rb){ const a=activity.find(x=>x.id===+rb.dataset.redo); if(!a||!a.undone) return; a.undone=false; if(a.redo) a.redo(); renderActivity(); renderRecent(); renderUndoChip(); toast("Redone"); return; }
   });
 
-  // ---- snooze ("Not now" → ask me again later) ----
+  // ---- snooze ("Later" → ask me again when?) ----
   const SNOOZE=[
     {k:"next", label:"At the next check", sub:"Comes back automatically on your next run"},
     {k:"3d",   label:"Snooze 3 days"},
@@ -1650,7 +1930,7 @@ window.SHOTS = {
   });
   function renderSnoozed(){
     const m=$("snoozed-mount"); refreshSnoozedSub();
-    if(!snoozed.length){ m.innerHTML=`<p class="empty">Nothing snoozed. When you tap “Not now” on a receipt you can hide it for a few days — it’ll wait here until you’re ready.</p>`; return; }
+    if(!snoozed.length){ m.innerHTML=`<p class="empty">Nothing snoozed. Tap “Later” on a receipt and you choose when it comes back — it waits here until then.</p>`; return; }
     m.innerHTML=`<p style="color:var(--ink-muted);font-size:14px;margin:0 0 12px;line-height:1.45">These won’t show in your review list until you bring them back.</p><div class="rowlist">`+snoozed.map((s,i)=>`<div class="setrow"><span class="ic" style="background:var(--surface-alt)">${s.logo}</span><div class="g"><b>${s.merchant}</b><span>Snoozed ${s.label}</span></div><button class="change" data-unsnooze="${i}">Bring back</button></div>`).join("")+`</div>`;
   }
   $("snoozed-mount").addEventListener("click",e=>{ const b=e.target.closest("[data-unsnooze]"); if(!b) return; snoozed.splice(+b.dataset.unsnooze,1); renderSnoozed(); toast("Back in your review list"); });
@@ -1783,12 +2063,10 @@ window.SHOTS = {
 
   // ---- recently sorted + history + transaction detail ----
   const catCount=items=>new Set(items.map(it=>it.c)).size;
-  function renderRecent(){
-    $("recent-list").innerHTML=history.slice(0,3).map(t=>{
-      const n=catCount(t.items);
-      return `<div class="row" data-txn="${t.id}"><span class="em">${t.logo}</span><div class="g"><b>${t.merchant}</b><span>${t.when} · ${n>1?`split into ${n} categories`:t.items[0].c}</span></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9E9DB0" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>`;
-    }).join("");
-  }
+  // Home no longer lists transactions (#D1) — it links to Previously sorted instead.
+  // Kept as a no-op hook so the undo/redo paths that refresh Home stay honest if rows
+  // ever come back; History re-renders itself on entry.
+  function renderRecent(){ const el=$("recent-list"); if(!el) return; }
   function renderHistory(days){
     histDays=days;
     $("hist-seg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",+b.dataset.days===days));
@@ -1866,18 +2144,25 @@ window.SHOTS = {
      b:"Here’s a quick look at how it works — about 30 seconds. You can skip anytime, and replay it later from Settings."},
     {target:"#s-home .hero", place:"below", t:"Your receipts to review",
      b:"This card shows how many receipts are waiting for you to categorize. We’ve already read each one and sorted every item — you just check our work."},
+    // the arrival claim used to live here, with nothing on screen to attach it to — and it
+    // contradicted the Check button two steps later. It now sits on that button (#C1).
     {center:true, demo:"caught", t:"When you’re all caught up",
-     b:"Once you’ve reviewed everything, the card looks like this. New receipts show up automatically, so there’s nothing to keep checking."},
+     b:"Once you’ve reviewed everything, the card looks like this. Nothing to do until your next receipts arrive."},
+    // one deliberately wrong category, and the step names it — "tap something to change it"
+    // gives no reason to tap when everything is already right (#C2)
     {center:true, demo:"picker", t:"Changing a category is one tap",
-     b:"Every line already has a category. Give it a go — tap an item below and pick a different category from the list."},
+     b:"We sort every line for you, but we don’t always get it right. Here we’ve filed <b>Dog treats</b> under Groceries. Tap it and move it to <b>Pets</b>."},
     {target:"#s-home .tab[data-tab='snap']", place:"above", t:"Got a paper receipt? Snap it",
      b:"Use the Snap tab to take a photo of any paper receipt. We’ll read it and sort it, just like the emailed ones."},
-    {target:"#s-home #checknow", place:"below", t:"Check whenever you like",
-     b:"Tap here any time to look for new receipts — both the ones you email in and the ones you photograph."},
-    {target:"#s-home .tab[data-tab='settings']", place:"above", t:"Settings & forwarding live here",
-     b:"Everything else is in Settings: connect YNAB, set up receipt forwarding, invite family — and replay this tour."},
-    {center:true, demo:"emails", t:"Forward from more than one inbox",
-     b:"Receipts can come from several emails — yours, your spouse’s, a shared household inbox. Add each one, set up the same filter, and point them all at your single address. We’ll show which are confirmed."},
+    {target:"#s-home #checknow", place:"below", t:"Receipts arrive on their own",
+     b:"We look for new receipts about once an hour, so they show up here without you doing anything. This button is for when you don’t want to wait — say you’ve just forwarded one, or snapped a photo."},
+    // #G1 made undo a permanent fixture, so the tour has to name it — Andrew's own point.
+    // Folded into the Settings step rather than a tenth screen: the tour is already nine
+    // steps and #B4 says this tester's attention was thinnest here.
+    {target:"#s-home .tab[data-tab='settings']", place:"above", t:"Changed your mind? Undo it",
+     b:"After any change, a small <b>Undo</b> button stays on screen — it doesn’t disappear on you. The clock beside it opens <b>Activity</b>, where every change is listed and you can undo any of them, however long ago. Activity also lives in Settings, along with YNAB, forwarding, inviting family — and this tour."},
+    {center:true, demo:"emails", t:"Forward from more than one email account",
+     b:"Receipts can arrive at several email accounts — yours, your spouse’s, a shared household one. Add each account, set up the same filter in it, and point them all at your single CategorAIze address. We’ll show which are confirmed."},
     {center:true, mark:true, t:"That’s it — you’re all set 🎉",
      b:"Snap or forward a receipt and we’ll take it from here. Want to see this again? Open Settings › How to use CategorAIze."},
   ];
@@ -1891,11 +2176,14 @@ window.SHOTS = {
   // the tutorial's picker demo is interactive — tap a line to open the real category
   // picker and change it in place (Andrew: Autumn tried to tap it, so it should work)
   let tutDemoItems=null;
-  function tutPickerItems(){ if(!tutDemoItems) tutDemoItems=[{n:"Organic eggs, 24ct",p:6.49,c:"Groceries"},{n:"Paper towels, 12pk",p:14.99,c:"Household Goods"}]; return tutDemoItems; }
+  // "Dog treats → Groceries" is wrong on purpose, and the step copy points at it (#C2)
+  function tutPickerItems(){ if(!tutDemoItems) tutDemoItems=[{n:"Dog treats, 30ct",p:12.99,c:"Groceries"},{n:"Paper towels, 12pk",p:14.99,c:"Household Goods"}]; return tutDemoItems; }
   function openTutPicker(i){ $("picker").classList.add("tut-front"); openPicker(tutPickerItems(),[i],(cat)=>{ renderTut(); toast(`Moved to ${cat}`); }); }
   function tutDemo(kind){
     if(kind==="picker"){ const its=tutPickerItems(); return `<div class="tut-demo">${its.map((it,i)=>DEMO_ROW(i,it.n,it.c)).join("")}</div>`; }
-    if(kind==="emails") return `<div class="tut-demo">${DEMO_MAIL("Your email",true)}${DEMO_MAIL("Mamie’s inbox",true)}${DEMO_MAIL("Household",false)}<div class="tut-li"><span style="font-size:16px;color:var(--brand)">＋</span><span class="nm" style="color:var(--brand);font-weight:600">Add email account</span></div></div>`;
+    // real addresses, not invented labels — the wizard shows addresses, and "Your email" /
+    // "Household" as *names* was read as a third kind of mailbox (#A1)
+    if(kind==="emails") return `<div class="tut-demo">${DEMO_MAIL(myEmail(),true)}${DEMO_MAIL("chris@email.com",true)}${DEMO_MAIL("household@email.com",false)}<div class="tut-li"><span style="font-size:16px;color:var(--brand)">＋</span><span class="nm" style="color:var(--brand);font-weight:600">Add email account</span></div></div>`;
     if(kind==="caught") return `<div class="tut-demo" style="text-align:center;padding:20px 10px"><div style="font-size:40px">🎉</div><div style="font-weight:700;margin-top:4px">All caught up</div><div style="font-size:12.5px;color:var(--ink-muted);margin-top:2px">Nothing to review right now.</div></div>`;
     return "";
   }
@@ -1991,17 +2279,22 @@ window.SHOTS = {
   // ---- sign in / sign up / onboarding ----
   // Sign in = prove you own your email (6-digit code). Your name only sets your
   // private receipts tag (+name); the code is what actually guards the profile.
-  $("login-email").addEventListener("input",()=>{ $("login-err").style.display="none"; });
+  const clearLoginErr=()=>{ $("login-err").style.display="none"; $("login-err-go").style.display="none"; };
+  $("login-email").addEventListener("input",clearLoginErr);
   $("send-code").onclick=()=>{
     authMode="signin"; authEmail=($("login-email").value||"").trim();
-    const err=m=>{ $("login-err-msg").textContent=m; $("login-err").style.display="flex"; };
+    const err=(m,offerSignup)=>{ $("login-err-msg").textContent=m; $("login-err").style.display="flex"; $("login-err-go").style.display=offerSignup?"":"none"; };
     if(!authEmail){ err("Enter the email you sign in with."); return; }
     // The code is emailed *by the server* — no server, no code. Say that rather
     // than sending them to a screen waiting for an email that will never arrive.
     if(blockedByOutage("Can’t send a code while CategorAIze is offline")) return;
-    if(!ACCOUNTS.has(authEmail.toLowerCase())){ err("We don’t see an account for that email. Check the spelling, or tap “Create a profile” below to make one."); return; }
-    $("login-err").style.display="none"; show("code");    // demo tip: mamie@email.com is a set-up account
+    // Unknown email = wrong screen, not a typo to explain. Short diagnosis plus a real
+    // button; the old version buried "tap Create a profile below" in clause two and
+    // testers couldn't convert it into an action (#A2).
+    if(!ACCOUNTS.has(authEmail.toLowerCase())){ err("We don’t see a profile for that email.", true); return; }
+    clearLoginErr(); show("code");    // demo tip: mamie@email.com is a set-up account
   };
+  $("login-err-go").onclick=()=>{ $("signup-email").value=($("login-email").value||"").trim(); clearLoginErr(); show("signup"); };
 
   function refreshTagPreview(){
     const r=resolveTag($("signup-name").value);
@@ -2027,8 +2320,20 @@ window.SHOTS = {
     else show("home");
   };
 
-  // setup screen: connect YNAB + copy address
-  $("setup-ynab").onclick=function(){ $("ynab-chev").innerHTML='<span class="st-done">Connected ✓</span>'; this.style.cursor="default"; ynabConnected=true; toast("YNAB connected"); };
+  // setup screen: both rows are drawn from state, so confirming forwarding marks its row
+  // done the same way connecting YNAB does. Previously only YNAB poked its own chevron,
+  // so "Forward your receipts" could never show as finished (#B2) — and the setup screen
+  // then disagreed with Home's soft-gate banner, which reads the same two booleans.
+  const CHEV='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+  function renderSetup(){
+    const rows=[["ynab-chev","setup-ynab",ynabConnected,"Connected ✓"],["fwd-chev","setup-fwd",emailConnected,"Confirmed ✓"]];
+    rows.forEach(([chevId,cardId,on,label])=>{
+      const c=$(chevId), card=$(cardId); if(!c) return;
+      c.innerHTML = on ? `<span class="st-done">${label}</span>` : CHEV;
+      if(card) card.style.cursor = on && cardId==="setup-ynab" ? "default" : "pointer";
+    });
+  }
+  $("setup-ynab").onclick=()=>{ if(ynabConnected) return; ynabConnected=true; renderSetup(); toast("YNAB connected"); };
   $("copy-addr").onclick=()=>copyText($("setup-addr").textContent,"Address copied");
   $("copy-addr2").onclick=()=>copyText($("forward-addr").textContent,"Address copied");
 
@@ -2051,9 +2356,10 @@ window.SHOTS = {
   // shows which are confirmed working (mirrors GET /forwarding/verify?source=).
   let fwdAccounts=null;
   function seedFwdAccounts(){
-    const mine=(authMode==="signup"?authEmail:signinEmail)||"you@email.com";
-    fwdAccounts=[{email:mine, label:"Your email", verified:!!emailConnected}];
+    fwdAccounts=[{email:myEmail(), label:"Your everyday email", verified:!!emailConnected}];
   }
+  // the signed-in person's own (personal) address — never the CategorAIze one
+  function myEmail(){ return (authMode==="signup"?authEmail:signinEmail)||"you@email.com"; }
   function renderForward(){
     if(!fwdAccounts) seedFwdAccounts();
     const a2=$("forward-addr2"); if(a2) a2.textContent=buildAddr(authTag);   // step-2 copybox mirrors the one address
@@ -2068,49 +2374,63 @@ window.SHOTS = {
           ? '<span class="conn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M20 6L9 17l-5-5"/></svg> Confirmed</span>'
           : `<button class="change" data-fwd-verify="${i}">Send test</button>`}
       </div>`).join("");
+    // the wizard only has an ending once something is actually confirmed (#B1)
+    $("forward-done").style.display = fwdAccounts.some(a=>a.verified) ? "" : "none";
   }
+  $("forward-done-btn").onclick=()=>show(forwardFrom);
   $("fwd-accounts").addEventListener("click",e=>{
     const b=e.target.closest("[data-fwd-verify]"); if(!b) return;
     const a=fwdAccounts[+b.dataset.fwdVerify]; b.disabled=true; b.textContent="Sending…"; toast("Sending a test…");
-    setTimeout(()=>{ a.verified=true; emailConnected=true; renderFwdAccounts(); $("forward-status").style.display="flex"; toast(`${a.label||a.email} confirmed 🎉`); },900);
+    setTimeout(()=>{ a.verified=true; emailConnected=true; renderFwdAccounts(); renderSetup(); toast(`${a.label||a.email} confirmed 🎉`); },900);
   });
   $("fwd-add").onclick=()=>{ $("email-input").value=""; $("email-label").value=""; $("emailsheet").classList.add("open"); setTimeout(()=>$("email-input").focus(),80); };
   $("email-add-btn").onclick=()=>{
     const em=($("email-input").value||"").trim(); if(!em){ toast("Enter an email address"); return; }
     const lb=($("email-label").value||"").trim();
     if(!fwdAccounts) seedFwdAccounts();
-    fwdAccounts.push({email:em, label:lb||"Another inbox", verified:false});
+    fwdAccounts.push({email:em, label:lb||"Another email account", verified:false});
     $("emailsheet").classList.remove("open"); renderFwdAccounts(); toast("Added — set up the same filter there, then send a test");
   };
   $("emailsheet").querySelector("[data-close-email]").onclick=()=>$("emailsheet").classList.remove("open");
 
   // ---- help & feedback ----
   const FB_COPY={
-    bug:{intro:"Tell us what happened in your own words — no tech words needed. It goes straight to the CategorAIze team.", q:"What happened?", ph:"Tell us what you were trying to do and what went wrong.", ctx:"What were you doing?", send:"Send report"},
-    idea:{intro:"Got an idea to make the app better? Tell us what you’d love it to do — this isn’t just for problems.", q:"Your idea", ph:"Describe the feature or change you’d like to see.", ctx:"What’s it about?", send:"Send idea"}
+    bug:{intro:"Tell us what happened in your own words — no tech words needed. It goes straight to the CategorAIze team.", q:"What happened?", ph:"Tell us what you were trying to do and what went wrong.", send:"Send report"},
+    idea:{intro:"Got an idea to make the app better? Tell us what you’d love it to do — this isn’t just for problems.", q:"Your idea", ph:"Describe the feature or change you’d like to see.", send:"Send idea"}
   };
   let fbType="bug";
   let draftSeq=1; const drafts=[];      // {id,type,text}
   let curDraftId=null;                  // draft being edited (null = a brand-new report)
   let draftsAll=false, pastAll=false;
   let ticketSeq=3;
+  // Messages carry `when` (#H3 — the thread had no dates at all, so "which of these is
+  // recent" had no answer on screen) and `seen` (per-message unread, since `unread` was a
+  // ticket-level boolean and couldn't mark *which* message was new). `needsReply` marks a
+  // team message that asks a question — the flag H2/H4 both hang off, mirroring `fix`.
   const tickets=[
-    {id:1, type:"bug", title:"Category didn’t save", status:"answered", unread:true,
-      msgs:[{who:"you",text:"When I changed an item to Groceries it kept popping back to the old category."},
-            {who:"team",fix:true,text:"Thanks — we found the bug and fixed it in the latest update. Please update the app and try again, then tap “This fixed it” if it’s working now."}]},
-    {id:2, type:"idea", title:"Add a monthly total", status:"open", unread:false,
-      msgs:[{who:"you",text:"Could the app show how much I spent on groceries this month?"}]}
+    {id:1, type:"bug", title:"Category didn’t save", status:"answered", unread:true, screen:"review",
+      msgs:[{who:"you",when:"3 days ago",seen:true,text:"When I changed an item to Groceries it kept popping back to the old category."},
+            {who:"team",fix:true,when:"2 days ago",seen:false,text:"Thanks — we found the bug and fixed it in the latest update. Please update the app and try again, then tap “This fixed it” if it’s working now."}]},
+    {id:2, type:"idea", title:"Add a monthly total", status:"open", unread:false, screen:"home",
+      msgs:[{who:"you",when:"Last week",seen:true,text:"Could the app show how much I spent on groceries this month?"}]}
   ];
+  const SCREEN_NAMES={home:"Home",review:"Review",snap:"Snap",history:"Previously sorted",txn:"a transaction",
+    settings:"Settings",forward:"Forward your receipts",setup:"Finish setup",vendors:"Stores we sort",
+    snoozed:"Snoozed receipts",activity:"Activity",invite:"Invite someone",feedback:"Help & feedback"};
+  const lastMsg=t=>t.msgs[t.msgs.length-1];
+  // The team asked something and you haven't answered yet. Derived, not stored — sending a
+  // reply makes your message the last one, so this clears itself and can't get stuck on.
+  function awaitingYou(t){ const m=lastMsg(t); return !!m && m.who==="team" && !!m.needsReply && t.status!=="resolved"; }
 
   function applyFbType(){
     const c=FB_COPY[fbType];
     $("fb-intro").textContent=c.intro; $("fb-q").textContent=c.q; $("fb-text").placeholder=c.ph;
-    $("fb-context-label").textContent=c.ctx; $("fb-send").textContent=c.send;
+    $("fb-send").textContent=c.send;
     $("fb-type").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.type===fbType));
   }
   $("fb-type").querySelectorAll("button").forEach(b=>b.onclick=()=>{ fbType=b.dataset.type; applyFbType(); });
   $("fb-text").addEventListener("input",()=>{ $("fb-draftnote").style.display=$("fb-text").value.trim()?"flex":"none"; });
-  function clearForm(){ $("fb-text").value=""; $("fb-draftnote").style.display="none"; $("fb-chips").querySelectorAll(".chip").forEach(x=>x.classList.remove("on")); $("fb-attach").querySelectorAll(".thumb").forEach(t=>t.remove()); }
+  function clearForm(){ $("fb-text").value=""; $("fb-draftnote").style.display="none"; $("fb-attach").querySelectorAll(".thumb").forEach(t=>t.remove()); }
 
   // Save the in-progress report as a draft. Updates the one you're editing, or
   // creates a new one. Called on New / Save draft / opening another draft / leaving.
@@ -2155,21 +2475,34 @@ window.SHOTS = {
   });
 
   // unread-reply notifications: a red dot on the Settings tab + the Help&feedback row + the report (#14)
+  // #H2: "new" and "owed" are different signals and used to collapse into one. Opening a
+  // ticket satisfied the dot even when the team's message was a question — so the tester
+  // backed out of a thread she owed an answer to and was never prompted again. A ticket now
+  // keeps a dot while a reply is owed; it just turns amber, so a question you've read still
+  // reads as outstanding without pretending to be new.
   function refreshNotifs(){
-    const unread=tickets.some(t=>t.unread);
-    const fn=$("fb-notif"); if(fn) fn.style.display = unread ? "" : "none";
+    const unread=tickets.some(t=>t.unread), owed=tickets.some(awaitingYou);
+    const fn=$("fb-notif"); if(fn){ fn.style.display=(unread||owed)?"":"none"; fn.classList.toggle("owed",!unread&&owed); }
     document.querySelectorAll('.tab[data-tab="settings"]').forEach(tab=>{
       let d=tab.querySelector(".tdot");
-      if(unread && !d){ d=document.createElement("span"); d.className="tdot"; tab.appendChild(d); }
-      else if(!unread && d){ d.remove(); }
+      if((unread||owed) && !d){ d=document.createElement("span"); d.className="tdot"; tab.appendChild(d); }
+      else if(!(unread||owed) && d){ d.remove(); }
+      if(d) d.classList.toggle("owed",!unread&&owed);
     });
   }
   function renderPast(){
     const shown = pastAll ? tickets : tickets.slice(0,2);
     $("fb-past").innerHTML=shown.map(t=>{
-      const icon=t.status==="resolved"?"✅":t.status==="answered"?"💬":"⏳";
-      const sub=t.status==="resolved"?"Resolved · tap to reopen":t.status==="answered"?(t.unread?"New reply from the team · tap to read":"Replied · tap to read"):"Sent · waiting for a reply";
-      return `<div class="setrow" data-ticket="${t.id}"><span class="ic" style="background:var(--good-tint)">${icon}</span><div class="g"><b>“${t.title}”${t.unread?'<span class="reddot"></span>':''}</b><span>${sub}</span></div><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>`;
+      const owed=awaitingYou(t);
+      const icon=t.status==="resolved"?"✅":owed?"✍️":t.status==="answered"?"💬":"⏳";
+      // "Replied · tap to read" is past tense and reads as nothing owed — which is exactly
+      // how a pending question got dropped. Say what's outstanding instead.
+      const sub=t.status==="resolved"?"Resolved · tap to reopen"
+        :owed?"Waiting for your reply"
+        :t.status==="answered"?(t.unread?"New reply from the team · tap to read":"Replied · tap to read")
+        :"Sent · waiting for a reply";
+      const dot=t.unread?'<span class="reddot"></span>':owed?'<span class="reddot owed"></span>':'';
+      return `<div class="setrow" data-ticket="${t.id}"><span class="ic" style="background:var(--good-tint)">${icon}</span><div class="g"><b>“${t.title}”${dot}</b><span>${sub}</span></div><span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>`;
     }).join("") || `<p style="text-align:center;color:var(--ink-faint);padding:22px;font-size:13.5px">No reports yet.</p>`;
     $("fb-past-toggle").textContent = tickets.length>2 ? (pastAll?"Show fewer":`See all ${tickets.length} ›`) : "";
     refreshNotifs();
@@ -2179,43 +2512,74 @@ window.SHOTS = {
 
   function openTicket(id){
     const t=tickets.find(x=>x.id===id); if(!t) return;
-    t.unread=false; refreshNotifs();                                  // opening it clears the unread dot
-    const fixOffered = t.msgs.some(m=>m.who==="team" && m.fix);       // did the team actually ship a fix to test?
+    t.unread=false;                                   // the *ticket* is no longer new…
+    const firstNew=t.msgs.findIndex(m=>m.who==="team" && !m.seen);   // …but which message was?
+    const owed=awaitingYou(t);
+    const last=lastMsg(t);
+    // Only the *last* team message decides what's being asked of you. A fix offered three
+    // messages ago that the team then followed up on with a question is not a fix awaiting
+    // a verdict — answering is the task, and two big verdict buttons on that screen invite
+    // a reflexive "Still not working" that tells us nothing (Andrew's point).
+    const fixPending = last && last.who==="team" && last.fix;
+    const youSpokeLast = last && last.who==="you";
+    const resolveLink = `<button class="linkact" id="tk-resolved">This is sorted — close it</button>`;
     let actions="";
     if(t.status==="resolved"){
       actions=`<div class="txn-note" style="margin-top:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Marked resolved</div>
         <button class="ghostbtn" id="tk-reopen" style="margin-top:14px">Reopen this report</button>`;
-    } else if(fixOffered){
+    } else if(fixPending){
       actions=`<div class="fb-label">Did this fix it?</div>
         <div class="rev-actions" style="padding:6px 0 0">
           <button class="approve" id="tk-fixed"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>This fixed it</button>
           <button class="skip" id="tk-still">Still not working</button>
         </div>`;
+    } else if(owed){
+      actions=resolveLink;                            // answering is the job; closing stays available, quietly
+    } else if(youSpokeLast){
+      // You've replied — it's the team's move. Nothing here should ask for another tap.
+      actions=`<div class="txn-note" style="margin-top:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Sent — the team will reply here. Nothing else to do.</div>${resolveLink}`;
     } else {
-      // no fix shipped yet (an idea, or the team asked a question) — let them close it out without implying a fix was tested
       actions=`<div class="rev-actions" style="padding:6px 0 0"><button class="approve" id="tk-resolved"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Mark resolved</button></div>`;
     }
-    const replyBox=`<div class="fb-label" style="margin-top:18px">Add more info</div>
+    // #H4: when the team asked a question, the screen used to answer a *different* question
+    // first — a full-width "Did this fix it?" with two big buttons — and pushed the reply box
+    // below the fold. Order by what's owed.
+    const replyBox=`<div class="fb-label" style="margin-top:18px">${owed?"The team asked a question — answer here":"Add more info"}</div>
       <textarea class="textarea" id="tk-reply" style="min-height:80px" placeholder="Anything else that helps — what you were doing, what you expected, or an answer to the team’s question."></textarea>
-      <button class="ghostbtn" id="tk-send" style="margin-top:10px">Send reply</button>`;
+      <button class="${owed?"primary":"ghostbtn"}" id="tk-send" style="margin-top:10px">Send reply</button>`;
     $("ticket-mount").innerHTML=`
-      <div style="display:flex;align-items:center;gap:9px;margin:2px 2px 14px"><span class="fb-typetag">${t.type==="idea"?"Idea":"Problem"}</span><b style="font-size:17px;letter-spacing:-.01em">${t.title}</b></div>
-      ${t.msgs.map(m=>`<div class="ticket-msg ${m.who==="you"?"you":"andrew"}"><span class="who">${m.who==="you"?"You":"CategorAIze team"}</span>${m.text}</div>`).join("")}
-      ${actions}
-      ${replyBox}`;
-    const grabReply=()=>{ const v=($("tk-reply").value||"").trim(); if(v) t.msgs.push({who:"you",text:v}); return v; };
-    const fx=$("tk-fixed"); if(fx) fx.onclick=()=>{ grabReply(); t.status="resolved"; toast("Marked as fixed — thanks! 💙"); show("feedback"); };
-    const st=$("tk-still"); if(st) st.onclick=()=>{ grabReply(); t.status="open"; toast("Reopened — we’ll take another look"); show("feedback"); };
-    const rs=$("tk-resolved"); if(rs) rs.onclick=()=>{ grabReply(); t.status="resolved"; toast("Marked resolved"); show("feedback"); };
+      <div style="display:flex;align-items:center;gap:9px;margin:2px 2px 6px"><span class="fb-typetag">${t.type==="idea"?"Idea":"Problem"}</span><b style="font-size:17px;letter-spacing:-.01em">${t.title}</b></div>
+      <div class="tk-from">Reported from ${SCREEN_NAMES[t.screen]||"the app"} · sent automatically with your report</div>
+      ${t.msgs.map((m,i)=>{
+        const isNew = m.who==="team" && !m.seen;
+        return `<div class="ticket-msg ${m.who==="you"?"you":"andrew"} ${isNew?"fresh":""}" ${i===firstNew?'id="tk-firstnew"':''}>
+          <span class="who">${m.who==="you"?"You":"CategorAIze team"}${isNew?'<span class="newtag">New</span>':''}<span class="when">${m.when||""}</span></span>${m.text}</div>`;
+      }).join("")}
+      ${owed?replyBox+actions:actions+replyBox}`;
+    // Put the new message under her eyes rather than trusting her to spot it — she re-read
+    // the *old* top message and treated the thread as one undifferentiated block (#H3).
+    if(firstNew>-1){ const el=$("tk-firstnew");
+      if(el) setTimeout(()=>el.scrollIntoView({block:"center",behavior:"smooth"}),120); }
+    t.msgs.forEach(m=>{ m.seen=true; });   // marked read only after this render drew them as new
+    refreshNotifs();
+    const grabReply=()=>{ const v=($("tk-reply").value||"").trim(); if(v) t.msgs.push({who:"you",when:"Just now",seen:true,text:v}); return v; };
+    const fx=$("tk-fixed"); if(fx) fx.onclick=()=>{ grabReply(); t.status="resolved"; renderPast(); toast("Marked as fixed — thanks! 💙"); show("feedback"); };
+    const st=$("tk-still"); if(st) st.onclick=()=>{ grabReply(); t.status="open"; renderPast(); toast("Reopened — we’ll take another look"); show("feedback"); };
+    const rs=$("tk-resolved"); if(rs) rs.onclick=()=>{ grabReply(); t.status="resolved"; renderPast(); toast("Marked resolved"); show("feedback"); };
     const ro=$("tk-reopen"); if(ro) ro.onclick=()=>{ grabReply(); t.status="open"; openTicket(id); toast("Reopened"); };   // #12: note carries into the reopen
-    const sd=$("tk-send"); if(sd) sd.onclick=()=>{ if(!$("tk-reply").value.trim()){ toastErr("Type your reply first"); return; } grabReply(); if(t.status==="resolved") t.status="open"; openTicket(id); toast("Reply sent"); };
+    // Replying is what clears an owed question (#H2) — the reply becomes the last message,
+    // so awaitingYou() goes false on its own and the amber dot goes with it.
+    const sd=$("tk-send"); if(sd) sd.onclick=()=>{ if(!$("tk-reply").value.trim()){ toastErr("Type your reply first"); return; } grabReply(); if(t.status==="resolved") t.status="open"; renderPast(); openTicket(id); toast("Reply sent"); };
     show("ticket");
   }
 
   $("fb-send").onclick=()=>{
     const txt=$("fb-text").value.trim(); if(!txt){ toastErr("Please add a bit more info before sending"); return; }
     const title = txt.length>40 ? txt.slice(0,40).trim()+"…" : txt;
-    tickets.unshift({id:ticketSeq++, type:fbType, title, status:"open", msgs:[{who:"you",text:txt}]});   // #3: now shows in past reports
+    // #H1: `screen` replaces the chips — stamped from fbFrom, which already tracked exactly
+    // this. Better metadata than a user-picked field, and it can't be mis-selected.
+    tickets.unshift({id:ticketSeq++, type:fbType, title, status:"open", screen:fbFrom,
+      msgs:[{who:"you",when:"Just now",seen:true,text:txt}]});   // #3: now shows in past reports
     if(curDraftId!=null){ const i=drafts.findIndex(x=>x.id===curDraftId); if(i>-1) drafts.splice(i,1); curDraftId=null; }
     clearForm(); renderDrafts(); renderPast();
     toast(fbType==="idea"?"Idea sent — thank you! 💡":"Got it — we’ll take a look 💙");
@@ -2235,7 +2599,9 @@ window.SHOTS = {
   // on Settings + the report so you can see the notification UX (real replies come from the backend)
   document.addEventListener("click",e=>{ if(e.target.closest("[data-simreply]")){
     const t=tickets.find(x=>x.status!=="resolved")||tickets[0];
-    t.msgs.push({who:"team",text:"Quick question from the team: which store’s receipt was this on? That’ll help us track it down."});
+    // needsReply marks this as a *question* rather than an update — the flag H2's amber dot
+    // and H4's reply-first ordering both read (mirrors the existing `fix` flag).
+    t.msgs.push({who:"team",needsReply:true,when:"Just now",seen:false,text:"Quick question from the team: which store’s receipt was this on? That’ll help us track it down."});
     t.status="answered"; t.unread=true; refreshNotifs(); if($("s-feedback").classList.contains("show")) renderPast();
     closeMenu(); toast("Simulated a reply from the team");
   } });
@@ -2311,7 +2677,7 @@ window.SHOTS = {
   // Tutorial: swipe between steps (mirrors Back/Next; won't dismiss the tour)
   addSwipe($("tut"), ()=>{ if(tutOn && tutStep<TUT.length-1) tutNext(); }, ()=>{ if(tutOn) tutBack(); });
 
-  updateHome(); renderRecent(); refreshNotifs();
+  updateHome(); renderRecent(); refreshNotifs(); renderSetup(); renderSnapBacklog(); applySchedule();
 })();
 </script>
 </body>
