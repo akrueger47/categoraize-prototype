@@ -25,6 +25,7 @@
     --line:#ECEAF2; --line-soft:#F4F3F8;
     --good:#2E9E5B; --good-tint:#E7F6EE; --good-ink:#1F7A44;
     --warn:#B45309; --warn-tint:#FDF1E1; --warn-line:#F3D9AE;
+    --down:#9B2C21; --down-tint:#FDECE9; --down-line:#F3CBC5;
     --w1:#22D3EE; --w2:#6366F1; --w3:#A855F7; --w4:#14B8A6; --w5:#EC4899;
     --shadow-card:0 1px 2px rgba(20,10,60,.05), 0 12px 28px -16px rgba(20,10,60,.22);
     --shadow-pop:0 12px 44px -10px rgba(20,10,60,.4);
@@ -366,6 +367,20 @@
   .setupbanner .sb-ic{width:42px;height:42px;border-radius:13px;background:#fff;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
   .setupbanner .sb-g{flex:1} .setupbanner .sb-g b{font-size:15px;font-weight:700;color:var(--warn);display:block} .setupbanner .sb-g span{font-size:12.5px;color:#8a5a1c;line-height:1.35}
   .setupbanner .chev{color:var(--warn);flex:0 0 auto}
+  /* server-status banner: the app's one honest signal that the backend (Andrew's
+     home server) is down or degraded.  Amber = partly working, red = don't bother
+     trying yet.  Not a card — it must read as a condition, not content. */
+  .statusban{width:100%;margin-bottom:14px;background:var(--warn-tint);border:1px solid var(--warn-line);border-radius:20px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;text-align:left}
+  .statusban .sb-ic{width:34px;height:34px;border-radius:11px;background:#fff;display:grid;place-items:center;flex:0 0 auto;color:var(--warn)}
+  .statusban .sb-g{flex:1;min-width:0}
+  .statusban .sb-g b{font-size:14.5px;font-weight:700;color:var(--warn);display:block;margin-bottom:2px}
+  .statusban .sb-g span{font-size:12.5px;color:#8a5a1c;line-height:1.4;display:block}
+  .statusban .retry{margin-top:9px;background:#fff;border:1px solid var(--warn-line);color:var(--warn);font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:10px;cursor:pointer}
+  .statusban.down{background:var(--down-tint);border-color:var(--down-line)}
+  .statusban.down .sb-ic{color:var(--down)}
+  .statusban.down .sb-g b{color:var(--down)}
+  .statusban.down .sb-g span{color:#8d3a31}
+  .statusban.down .retry{border-color:var(--down-line);color:var(--down)}
   .empty{text-align:center;color:var(--ink-faint);padding:40px 24px;font-size:14px;line-height:1.5}
 
   /* screenshot popup (mock) */
@@ -462,6 +477,7 @@
       <div class="mark brandmark"></div>
       <div class="wordmark">Categor<span class="ai">AI</span>ze</div>
       <p>Snap or forward a receipt.<br>We sort the categories for you.</p>
+      <div id="status-ban-login" style="align-self:stretch"></div>
       <div class="field-lbl" style="align-self:stretch;text-align:left;margin:6px 2px 4px">Sign in</div>
       <input class="field" id="login-email" placeholder="Email you sign in with" inputmode="email" autocomplete="email" autocapitalize="none">
       <div class="fielderr" id="login-err" style="display:none;align-self:stretch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span id="login-err-msg"></span></div>
@@ -612,6 +628,7 @@
         <button class="iconbtn sp" data-go="feedback">?</button>
       </div>
 
+      <div id="status-ban"></div>
       <div id="home-setup" style="display:none"></div>
 
       <div class="hero" data-go="review">
@@ -641,7 +658,7 @@
       <div class="ttl">Review</div>
     </div>
     <div class="progress" id="rev-progress"></div>
-    <div class="scroll"><div class="pad" style="padding-top:0" id="rev-mount"></div></div>
+    <div class="scroll"><div class="pad" style="padding-top:0"><div id="status-ban-rev"></div><div id="rev-mount"></div></div></div>
     <div class="msbar" id="msbar"><span class="n" id="ms-count">0 selected</span><button id="ms-go" disabled>Categorize</button></div>
   </div>
 
@@ -991,6 +1008,8 @@
       <div class="mlbl">Onboarding</div>
       <button data-tutorial>▶ Replay tutorial</button>
       <button data-simreply>✉️ Simulate team reply</button>
+      <div class="mlbl">Server status</div>
+      <button data-statusdemo>📡 Cycle status banner</button>
     </div>
   </div>
 
@@ -1094,6 +1113,7 @@ window.SHOTS = {
     // leaving Help & feedback with text in the box? keep it — save/update a draft (#4)
     if(id!=="feedback" && $("s-feedback").classList.contains("show")) stashDraft();
     SCREENS.forEach(s=>$("s-"+s).classList.toggle("show", s===id));
+    renderStatus();   // the outage banner follows you between screens
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.tab===id));
     $("fab").classList.toggle("up", !["home","snap","settings"].includes(id));
     if(id==="code"){ $("code-email").textContent = authEmail || "your email"; }
@@ -1185,6 +1205,9 @@ window.SHOTS = {
     root.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
       const p=proposals[idx], was=idx;
       if(b.dataset.act==="approve"){
+        // Approving is a write to the server (and on to YNAB). While it's down,
+        // refuse honestly instead of clearing the card and losing the decision.
+        if(blockedByOutage("Can’t save right now — this receipt will still be here")) return;
         done.add(was);
         const undo=()=>{ done.delete(was); idx=was; multi=false; selected.clear(); if($("s-review").classList.contains("show")) renderReview(); updateHome(); };
         logAct(p.kind==="refund"?"↩️":"✅", p.kind==="refund"?`${p.merchant} refund categorized`:`${p.merchant} approved`, p.kind==="refund"?"Credited back · tap Undo":"Sent to YNAB · tap Undo to bring it back", undo);
@@ -1341,7 +1364,8 @@ window.SHOTS = {
     $("snap-hint").textContent = pages===1 ? "Got it. Long receipt? Add another page." : `${pages} pages captured for this one receipt.`;
   };
   $("snap-again").onclick=()=>{ toast("Camera ready — line up the next part"); };
-  $("snap-done").onclick=()=>{ toast(`Reading ${pages} ${pages>1?'pages':'page'}…`); setTimeout(()=>{ resetSnap(); show("review"); },900); };
+  $("snap-done").onclick=()=>{ if(blockedByOutage("Can’t read receipts right now — try again later")) return;
+    toast(`Reading ${pages} ${pages>1?'pages':'page'}…`); setTimeout(()=>{ resetSnap(); show("review"); },900); };
 
   // ---- misc ----
   let tT; function toast(m,undo){ const t=$("toast"); t.classList.remove("err");
@@ -1361,7 +1385,10 @@ window.SHOTS = {
     t.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFD9D5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg><span>${m}</span>`;
     t.classList.add("err","show"); clearTimeout(tT); tT=setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.classList.remove("err"),300);}, 2400); }
 
-  $("checknow").onclick=function(){ const b=this,h=b.innerHTML; if(b.dataset.busy) return; b.dataset.busy="1";
+  $("checknow").onclick=function(){ const b=this,h=b.innerHTML; if(b.dataset.busy) return;
+    // A check is a server round-trip; don't fake a spinner that can only fail.
+    if(blockedByOutage("Can’t check right now — CategorAIze is offline")) return;
+    b.dataset.busy="1";
     b.querySelector(".ic").innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.1" stroke-linecap="round" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-3-6.7"/></svg>';
     setTimeout(()=>{ b.innerHTML=h; delete b.dataset.busy; toast("Nothing new right now"); },1400); };
 
@@ -1386,6 +1413,7 @@ window.SHOTS = {
   // Checking only reads the inbox + YNAB; it doesn't call the AI until there's
   // something new to categorize, so extra checks are effectively free.
   const SCHED=[
+    {key:"hourly", label:"Every hour",        timed:false, counted:false, dayed:false},
     {key:"few",    label:"A few times a day", timed:true,  counted:true,  dayed:false},
     {key:"daily",  label:"Once a day",        timed:true,  counted:false, dayed:false},
     {key:"weekly", label:"Once a week",       timed:true,  counted:false, dayed:true },
@@ -1420,7 +1448,8 @@ window.SHOTS = {
     const o=optOf(schedKey);
     if(o.timed && !o.counted){ const h=$("ts-h"),m=$("ts-m"),ap=$("ts-ap"); if(h){schedH=+h.value;schedM=+m.value;schedAP=ap.value;} }
     let val, sub;
-    if(schedKey==="few"){ val=`${schedCount}× a day`; sub=`Automatically, ${schedCount} times a day`; }
+    if(schedKey==="hourly"){ val="Hourly"; sub="Automatically, once an hour"; }
+    else if(schedKey==="few"){ val=`${schedCount}× a day`; sub=`Automatically, ${schedCount} times a day`; }
     else if(schedKey==="daily"){ val=`Daily · ${fmtTime()}`; sub=`Automatically, once a day at ${fmtTime()}`; }
     else if(schedKey==="weekly"){ val=`Weekly · ${schedDay} ${fmtTime()}`; sub=`Automatically, every ${schedDay} at ${fmtTime()}`; }
     else { val="Manual"; sub="Never automatic — you tap Check for new receipts"; }
@@ -1627,6 +1656,124 @@ window.SHOTS = {
   $("snoozed-mount").addEventListener("click",e=>{ const b=e.target.closest("[data-unsnooze]"); if(!b) return; snoozed.splice(+b.dataset.unsnooze,1); renderSnoozed(); toast("Back in your review list"); });
 
   // ---- soft gate: finish-setup card on Home until YNAB + email are connected ----
+  // ---- server status / outage banner -------------------------------------
+  // Everything the app can do runs on Andrew's home server, so it needs one
+  // honest way to say "not me, the server". Two signals, because a dead server
+  // can't report its own death:
+  //   1. GET {API}/status   — the server's self-report (partial failures: the
+  //      receipt sync stopped, YNAB or Gmail is broken, a posted notice).
+  //   2. the request failing — box off, tunnel down, no route: that IS the
+  //      answer, and it needs nothing from the server.
+  // STATUS_FALLBACK_URL is an optional status file hosted *off* the box (same
+  // JSON shape), so a notice can still reach people during a full outage.
+  const API_BASE = "";                 // real app: the Cloudflare Tunnel hostname
+  const STATUS_FALLBACK_URL = "";      // real app: e.g. a gist / Pages URL
+  const LIVE_STATUS = false;           // prototype has no backend — see the jump menu
+  const STATUS_POLL_MS = 60000;
+  // Short and not a paragraph: users need "it's not you, come back later", not an
+  // apology. Only added when there's no hand-written notice, which speaks for itself.
+  const AWARE_NOTE = "Already being looked at.";
+
+  // Mirrors the /status payload. `reachable:false` is the client-only state.
+  let svc = { state:"ok", message:"", notice:null, reachable:true };
+
+  async function fetchJson(url, ms){
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), ms||6000);   // a hung request is an outage
+    try{
+      const res = await fetch(url, {signal:ctrl.signal, cache:"no-store"});
+      if(!res.ok) throw new Error("http "+res.status);
+      return await res.json();
+    } finally { clearTimeout(timer); }
+  }
+
+  async function refreshStatus(){
+    if(!LIVE_STATUS) return;
+    try{
+      const body = await fetchJson(API_BASE+"/status");
+      svc = {state:body.state, message:body.message, notice:body.notice, reachable:true};
+    }catch(_){
+      // Can't reach our own API. Try the off-box status file for a real message;
+      // if that's missing or also unreachable, unreachable-means-down stands.
+      let body=null;
+      if(STATUS_FALLBACK_URL){ try{ body = await fetchJson(STATUS_FALLBACK_URL,4000); }catch(__){} }
+      svc = body
+        ? {state:body.state||"down", message:body.message||"", notice:body.notice||null, reachable:false}
+        : {state:"down", message:"", notice:null, reachable:false};
+    }
+    renderStatus();
+  }
+
+  const svcOk = ()=> svc.reachable && svc.state==="ok";
+  const svcBlocked = ()=> !svc.reachable || svc.state==="down";   // nothing will save
+
+  function statusCopy(){
+    if(!svc.reachable) return {
+      down:true, title:"Can’t reach CategorAIze",
+      body: svc.message || `Your phone can’t reach the server right now. Check back in a bit — nothing you’ve done is lost. ${AWARE_NOTE}` };
+    if(svc.state==="down") return {
+      down:true, title:"CategorAIze is down right now",
+      body: svc.notice ? svc.message : `Check back a bit later — nothing you’ve done is lost. ${AWARE_NOTE}` };
+    // A hand-written notice supplies its own specifics, so it gets the softer
+    // title — "some things aren't working" over "back in an hour" reads worse
+    // than the notice alone.
+    return svc.notice
+      ? {down:false, title:"Heads up", body:svc.message}
+      : {down:false, title:"Some things aren’t working",
+         body:`New receipts may be delayed. Everything already sorted is fine. ${AWARE_NOTE}`};
+  }
+
+  const SB_ICON = {
+    down:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8A16 16 0 0 1 22 8.8M5.5 12.5a11 11 0 0 1 13 0M9 16.2a6 6 0 0 1 6 0M12 20h.01"/><path d="M3 3l18 18"/></svg>',
+    warn:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>'};
+
+  function renderStatus(){
+    const mounts=["status-ban","status-ban-rev","status-ban-login"].map($).filter(Boolean);
+    if(svcOk()){ mounts.forEach(m=>{ m.innerHTML=""; }); return; }
+    const c=statusCopy();
+    const html=`<div class="statusban${c.down?" down":""}">
+      <span class="sb-ic">${c.down?SB_ICON.down:SB_ICON.warn}</span>
+      <div class="sb-g"><b>${c.title}</b><span>${c.body}</span>
+      ${c.down?`<button class="retry" data-status-retry>Try again</button>`:""}</div></div>`;
+    mounts.forEach(m=>{ m.innerHTML=html; });
+  }
+
+  // Retry is the whole "check back later" affordance — re-poll, and say so when
+  // it's still down rather than silently doing nothing.
+  document.addEventListener("click",e=>{
+    if(!e.target.closest("[data-status-retry]")) return;
+    if(!LIVE_STATUS){ toastErr("Still can’t reach the server"); return; }
+    refreshStatus().then(()=>{ if(svcOk()) toast("Back online"); else toastErr("Still can’t reach the server"); });
+  });
+
+  // Guard for anything that needs the server. Returns true when it's blocked, so
+  // callers read: `if(blockedByOutage(...)) return;`
+  function blockedByOutage(msg){
+    if(!svcBlocked()) return false;
+    toastErr(msg||"Offline — try again later");
+    return true;
+  }
+
+  if(LIVE_STATUS){ refreshStatus(); setInterval(refreshStatus, STATUS_POLL_MS); }
+
+  // Prototype-only: cycle the states so the banner can be reviewed without a
+  // backend. The real app never sets `svc` by hand.
+  const DEMO_STATES=[
+    {label:"Everything's running", v:{state:"ok", message:"", notice:null, reachable:true}},
+    {label:"Notice (planned)", v:{state:"degraded", message:"Back to normal in about an hour.", notice:{}, reachable:true}},
+    {label:"Degraded (no notice)", v:{state:"degraded", message:"", notice:null, reachable:true}},
+    {label:"Server down (notice)", v:{state:"down", message:"Power’s out at the house — back tonight.", notice:{}, reachable:true}},
+    {label:"Can't reach server", v:{state:"down", message:"", notice:null, reachable:false}},
+  ];
+  let demoStatus=0;
+  function cycleDemoStatus(){
+    demoStatus=(demoStatus+1)%DEMO_STATES.length;
+    const next=DEMO_STATES[demoStatus];
+    svc={...next.v};
+    renderStatus(); renderHomeSetup();
+    toast("Status: "+next.label);
+  }
+
   function renderHomeSetup(){
     const el=$("home-setup"); if(!el) return;
     if(ynabConnected && emailConnected){ el.style.display="none"; el.innerHTML=""; return; }
@@ -1838,6 +1985,7 @@ window.SHOTS = {
   }
   // replay from Settings row / jump menu → make sure we're on Home, then run
   document.addEventListener("click",e=>{ if(e.target.closest("[data-tutorial]")){ closeMenu(); show("home"); setTimeout(startTutorial,340); } });
+  document.addEventListener("click",e=>{ if(e.target.closest("[data-statusdemo]")){ closeMenu(); cycleDemoStatus(); } });
   window.addEventListener("resize",()=>{ if(tutOn) renderTut(); });
 
   // ---- sign in / sign up / onboarding ----
@@ -1848,6 +1996,9 @@ window.SHOTS = {
     authMode="signin"; authEmail=($("login-email").value||"").trim();
     const err=m=>{ $("login-err-msg").textContent=m; $("login-err").style.display="flex"; };
     if(!authEmail){ err("Enter the email you sign in with."); return; }
+    // The code is emailed *by the server* — no server, no code. Say that rather
+    // than sending them to a screen waiting for an email that will never arrive.
+    if(blockedByOutage("Can’t send a code while CategorAIze is offline")) return;
     if(!ACCOUNTS.has(authEmail.toLowerCase())){ err("We don’t see an account for that email. Check the spelling, or tap “Create a profile” below to make one."); return; }
     $("login-err").style.display="none"; show("code");    // demo tip: mamie@email.com is a set-up account
   };
